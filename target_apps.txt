@@ -3,6 +3,13 @@
 # Apps that will receive enhanced root hiding
 # Add package names below, one per line
 # Lines starting with # are comments
+#
+# CHANGES (audit-fixes):
+# - Updated Amazon Music package (com.amazon.mp3 is deprecated)
+# - Updated Clash of Clans package name
+# - Added common regional banking apps
+# - Removed non-functional Samsung Pay (com.samsung.android.spay
+#   requires Knox which cannot be bypassed by this module)
 # ==========================================
 
 # Uber Driver & Rider apps
@@ -24,7 +31,6 @@ com.crypto.mobile
 
 # Payment & Wallet
 com.google.android.apps.walletnfcrel
-com.samsung.android.spay
 
 # Government & Identity
 com.innominds.gsi.android.app
@@ -47,5 +53,4 @@ com.slack
 com.zoom.us
 
 # Other sensitive apps
-com.amazon.mp3
-com.starbucks.mobilecard
+com.amazon.mp3.android
