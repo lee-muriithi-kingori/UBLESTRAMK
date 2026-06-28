@@ -4,12 +4,18 @@
 # Add package names below, one per line
 # Lines starting with # are comments
 #
-# CHANGES (audit-fixes):
-# - Updated Amazon Music package (com.amazon.mp3 is deprecated)
-# - Updated Clash of Clans package name
-# - Added common regional banking apps
-# - Removed non-functional Samsung Pay (com.samsung.android.spay
-#   requires Knox which cannot be bypassed by this module)
+# CHANGES (v0.9.1-beta):
+# - Fixed Amazon Music package name (com.amazon.mp3 is current,
+#   com.amazon.mp3.android is deprecated)
+# - Added major African banking and fintech apps:
+#   M-Pesa, Equity, KCB, Co-op, Absa, Stanbic (Kenya)
+#   Opay, PalmPay, Kuda (Nigeria)
+#   Chipper Cash (Africa-wide)
+# - Added Bolt Driver (Uber competitor in Africa)
+# - Added Revolut, Wise (global fintech)
+# - Removed non-functional Samsung Pay (requires Knox
+#   hardware attestation which this module cannot bypass)
+# (fixes issues #2, #6)
 # ==========================================
 
 # Uber Driver & Rider apps
@@ -17,7 +23,10 @@ com.ubercab.driver
 com.ubercab
 com.ubercab.eats
 
-# Banking & Financial
+# Bolt (Uber competitor in Africa/Europe)
+ee.mtakso.client
+
+# Banking & Financial (US/Global)
 com.chase.sig.android
 com.bankofamerica.cashpromobile
 com.wf.wellsfargomobile
@@ -28,6 +37,26 @@ com.venmo
 com.coinbase.android
 com.binance.dev
 com.crypto.mobile
+
+# Banking & Financial (Kenya)
+com.safaricom.mpesa.lifestyle
+com.equitybank.equityjiunge
+com.kcbgroup.kcbpip
+co.ke.coopbank
+za.co.absa.africa.android
+com.stanbicbank
+
+# Banking & Fintech (Nigeria)
+com.opay.ng
+com.transsnet.palmpay
+com.kudabank.app
+
+# Fintech (Africa-wide)
+com.chippercash
+
+# Fintech (Global)
+com.revolut.revolut
+com.transferwise.android
 
 # Payment & Wallet
 com.google.android.apps.walletnfcrel
@@ -53,4 +82,4 @@ com.slack
 com.zoom.us
 
 # Other sensitive apps
-com.amazon.mp3.android
+com.amazon.mp3
