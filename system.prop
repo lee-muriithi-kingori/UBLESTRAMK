@@ -1,6 +1,12 @@
 # ==========================================
 # UBLESTRAMK - System Properties
 # These props are loaded as system properties
+#
+# CHANGES (v0.9.1-beta):
+# - Fixed ro.boot.mode from 'unknown' to 'boot'
+#   'unknown' is an anomalous value that triggers detection
+#   heuristics. 'boot' is the standard normal-boot value.
+#   (fixes issue #4)
 # ==========================================
 
 # Build properties - stock device appearance
@@ -28,5 +34,8 @@ ro.secureboot.devicelock=1
 # OEM unlock disabled
 sys.oem_unlock_allowed=0
 
-# Recovery mode prevention
-ro.boot.mode=unknown
+# Recovery mode prevention - set to standard boot value
+# NOTE: post-fs-data.sh uses resetprop_if_match to change this
+# only when it currently contains "recovery", which is safer.
+# This default value ensures a normal boot state is presented.
+ro.boot.mode=boot
