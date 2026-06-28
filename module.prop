@@ -1,0 +1,9 @@
+id=UBLESTRAMK
+name=UBLESTRAMK [BETA]
+version=v0.9.0-beta
+versionCode=900
+author=lee-muriithi-kingori
+description=Universal Boot-Lock Evasion & Stealth Root Admin Module for Magisk/KernelSU - Hide root from Uber Driver, banking apps & more. Unmounts modules while retaining functionality. Spoofs locked bootloader & clean device state. BETA - Community testing phase.
+updateJson=https://raw.githubusercontent.com/lee-muriithi-kingori/UBLESTRAMK/main/update.json
+donate=https://github.com/sponsors/lee-muriithi-kingori
+support=https://github.com/lee-muriithi-kingori/UBLESTRAMK/issues
