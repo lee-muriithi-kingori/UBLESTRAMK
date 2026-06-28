@@ -1,0 +1,32 @@
+# ==========================================
+# UBLESTRAMK - System Properties
+# These props are loaded as system properties
+# ==========================================
+
+# Build properties - stock device appearance
+ro.build.tags=release-keys
+ro.build.type=user
+ro.secure=1
+ro.adb.secure=1
+ro.debuggable=0
+ro.force.debuggable=0
+
+# Bootloader - locked state
+ro.boot.flash.locked=1
+ro.boot.verifiedbootstate=green
+ro.boot.veritymode=enforcing
+ro.boot.vbmeta.device_state=locked
+
+# Samsung Knox - not triggered
+ro.boot.warranty_bit=0
+ro.warranty_bit=0
+
+# Secure boot
+ro.secureboot.lockstate=locked
+ro.secureboot.devicelock=1
+
+# OEM unlock disabled
+sys.oem_unlock_allowed=0
+
+# Recovery mode prevention
+ro.boot.mode=unknown
