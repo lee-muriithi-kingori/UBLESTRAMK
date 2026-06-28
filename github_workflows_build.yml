@@ -1,0 +1,84 @@
+name: Build UBLESTRAMK
+
+on:
+  push:
+    branches: [ main, develop ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Setup Android NDK
+      uses: nttld/setup-ndk@v1
+      with:
+        ndk-version: r26b
+        link-to-system-ndk: true
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y zip unzip
+
+    - name: Get version
+      id: version
+      run: |
+        VERSION=$(grep "^version=" module.prop | cut -d'=' -f2)
+        VERSION_CODE=$(grep "^versionCode=" module.prop | cut -d'=' -f2)
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        echo "VERSION_CODE=$VERSION_CODE" >> $GITHUB_OUTPUT
+        echo "Module version: $VERSION (code: $VERSION_CODE)"
+
+    - name: Build module
+      run: |
+        chmod +x build.sh
+        ./build.sh "${{ steps.version.outputs.VERSION }}"
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: UBLESTRAMK-${{ steps.version.outputs.VERSION }}
+        path: output/*.zip
+
+    - name: Upload checksums
+      uses: actions/upload-artifact@v4
+      with:
+        name: checksums-${{ steps.version.outputs.VERSION }}
+        path: output/*.sha256
+
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/v')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          output/*.zip
+          output/*.sha256
+          output/update.json
+        body: |
+          # UBLESTRAMK ${{ steps.version.outputs.VERSION }}
+          
+          ## Installation
+          1. Download the ZIP file
+          2. Install via Magisk/KernelSU/APatch Manager
+          3. Reboot your device
+          4. Configure denylist/unmount modules for target apps
+          5. Clear target app data
+          
+          ## What's New
+          See [CHANGELOG.md](CHANGELOG.md) for details.
+          
+          ## Beta Notice
+          This is a beta release. Please report issues at:
+          https://github.com/${{ github.repository }}/issues
+        draft: true
+        prerelease: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
