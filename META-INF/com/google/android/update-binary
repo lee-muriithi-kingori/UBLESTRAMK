@@ -1,0 +1,93 @@
+#!/sbin/sh
+# ==========================================
+# UBLESTRAMK - Magisk/KernelSU/APatch Update Binary
+# Universal installer for all root solutions
+# ==========================================
+
+#################
+# Initialization
+#################
+
+umask 022
+
+# echo before loading util_functions
+ui_print() { echo "$1"; }
+
+OUTFD=$2
+ZIPFILE=$3
+
+# Detect root solution and source appropriate functions
+mount /data 2>/dev/null
+
+# Try Magisk
+if [ -f /data/adb/magisk/util_functions.sh ]; then
+    . /data/adb/magisk/util_functions.sh
+    ui_print "- Magisk environment detected"
+# Try KernelSU
+elif [ -f /data/adb/ksu/bin/busybox ]; then
+    # KernelSU style installation
+    KSU=true
+    export KSU
+    ui_print "- KernelSU environment detected"
+    # Source minimal functions for KSU
+    MAGISK_VER="KernelSU"
+    MAGISK_VER_CODE=99999
+# Try APatch
+elif [ -f /data/adb/ap/bin/busybox ]; then
+    APATCH=true
+    export APATCH
+    ui_print "- APatch environment detected"
+    MAGISK_VER="APatch"
+    MAGISK_VER_CODE=99999
+else
+    ui_print "! WARNING: Could not detect root solution"
+    ui_print "- Attempting generic installation..."
+fi
+
+#################
+# Setup
+#################
+
+# Default permissions
+set_permissions() {
+    set_perm_recursive $MODPATH 0 0 0755 0644
+    set_perm $MODPATH/post-fs-data.sh 0 0 0755
+    set_perm $MODPATH/service.sh 0 0 0755
+    set_perm $MODPATH/common_func.sh 0 0 0644
+    set_perm $MODPATH/target_apps.txt 0 0 0644
+    set_perm $MODPATH/customize.sh 0 0 0755
+    set_perm $MODPATH/uninstall.sh 0 0 0755
+    set_perm $MODPATH/action.sh 0 0 0755
+    set_perm $MODPATH/hide_root.sh 0 0 0755
+    
+    # Zygisk libraries
+    if [ -d "$MODPATH/zygisk" ]; then
+        set_perm_recursive $MODPATH/zygisk 0 0 0755 0644
+    fi
+}
+
+#################
+# Install
+#################
+
+# Extract module files
+ui_print "- Extracting module files..."
+mkdir -p $MODPATH
+unzip -o "$ZIPFILE" -d $MODPATH >/dev/null 2>&1
+
+# Run customize script if present
+if [ -f "$MODPATH/customize.sh" ]; then
+    ui_print "- Running customize script..."
+    . $MODPATH/customize.sh
+fi
+
+# Set final permissions
+ui_print "- Setting permissions..."
+set_permissions
+
+ui_print ""
+ui_print "- Installation complete!"
+ui_print "- Please REBOOT your device"
+ui_print ""
+
+exit 0
