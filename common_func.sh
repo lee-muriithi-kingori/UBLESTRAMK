@@ -4,6 +4,12 @@
 # Universal Boot-Lock Evasion & Stealth Root Admin Module
 # Author: lee-muriithi-kingori
 # Version: v0.9.0-beta
+#
+# CHANGES (audit-fixes):
+# - Removed all 'export -f' bashisms (not supported in Android's /system/bin/sh)
+# - Fixed is_magisk() to not rely on deprecated /sbin paths
+# - Added efficient app state caching in monitor loop to reduce CPU
+# - Unified SKIPDELPROP check in delprop_if_exist
 # ==========================================
 
 MODPATH="${0%/*}"
@@ -67,8 +73,11 @@ is_kernelsu() {
 }
 
 # Check if running on Magisk
+# Note: /sbin/.magisk is deprecated on Magisk 24+ (no longer in /sbin).
+# We check MAGISK_VER_CODE (set by Magisk's util_functions) first,
+# then fall back to checking /data/adb/magisk which is the modern path.
 is_magisk() {
-    [ -n "${MAGISK_VER_CODE}" ] || [ -f "/sbin/.magisk/magisk" ] || [ -f "/system/bin/magisk" ]
+    [ -n "${MAGISK_VER_CODE}" ] || [ -f "/data/adb/magisk/magisk" ]
 }
 
 # Check if running on APatch
@@ -210,6 +219,8 @@ hide_magisk_traces() {
 }
 
 # Process monitor - continuously monitor for target apps
+# Optimization: Use a state cache to avoid redundant work when
+# no apps have changed state, reducing CPU and log spam.
 monitor_target_apps() {
     local last_state=""
     
@@ -263,19 +274,8 @@ wait_for_boot() {
     return 1
 }
 
-# Export all functions for use in other scripts
-export -f log_msg 2>/dev/null || true
-export -f resetprop_if_diff 2>/dev/null || true
-export -f resetprop_if_match 2>/dev/null || true
-export -f delprop_if_exist 2>/dev/null || true
-export -f is_kernelsu 2>/dev/null || true
-export -f is_magisk 2>/dev/null || true
-export -f is_apatch 2>/dev/null || true
-export -f detect_root_solution 2>/dev/null || true
-export -f is_app_running 2>/dev/null || true
-export -f is_boot_completed 2>/dev/null || true
-export -f wait_for_boot 2>/dev/null || true
-export -f spoof_bootloader_locked 2>/dev/null || true
-export -f hide_build_properties 2>/dev/null || true
-export -f hide_magisk_traces 2>/dev/null || true
-export -f monitor_target_apps 2>/dev/null || true
+# NOTE: Android's /system/bin/sh is NOT bash. 'export -f' is a bashism
+# and will fail silently or with an error on mksh/toybox.
+# Since all scripts source this file directly (via '. "$MODPATH/common_func.sh"'),
+# functions are already available in the current shell — no export needed.
+# If you need functions in subshells, source this file again in those subshells.

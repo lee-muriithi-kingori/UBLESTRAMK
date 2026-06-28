@@ -7,6 +7,11 @@
 # IMPORTANT: Magisk's service.sh is expected to fork background work
 # and exit quickly. Blocking here breaks Magisk's service lifecycle
 # and can cause bootloops. We follow the spawn-and-exit pattern.
+#
+# CHANGES (audit-fixes):
+# - Removed duplicate property sets (vendor.boot.verifiedbootstate and
+#   ro.boot.vbmeta.device_state were each set twice)
+# - Replaced 'disown' bashism with POSIX-compatible nohup subshell
 # ==========================================
 
 MODPATH="${0%/*}"
@@ -32,8 +37,6 @@ hide_build_properties
     if [ "$SKIPDELPROP" = false ]; then
         delprop_if_exist ro.build.selinux
     fi
-    resetprop_if_diff vendor.boot.verifiedbootstate green
-    resetprop_if_diff ro.boot.vbmeta.device_state locked
     log_msg "INFO" "Late-boot properties applied"
 ) &
 
@@ -41,11 +44,17 @@ hide_build_properties
 wait_for_boot
 
 log_msg "INFO" "Starting target app monitor"
-monitor_target_apps &
-MONITOR_PID=$!
 
-# Detach from the parent shell so Magisk doesn't block on us
-disown $MONITOR_PID 2>/dev/null || true
+# Use a POSIX-friendly detached subshell instead of 'disown'
+# which is a bashism not available in Android's /system/bin/sh.
+# nohup + redirection ensures the monitor survives service.sh exit.
+(
+    nohup sh -c '
+        MODPATH="'"$MODPATH"'"
+        . "$MODPATH/common_func.sh"
+        monitor_target_apps
+    ' >/dev/null 2>&1 &
+)
 
 log_msg "INFO" "Service spawn complete, monitor detached"
 exit 0

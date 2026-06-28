@@ -2,6 +2,12 @@
 # ==========================================
 # UBLESTRAMK - Post Filesystem Data Script
 # Runs early in boot - before Zygote starts
+#
+# CHANGES (audit-fixes):
+# - Removed no-op chmod calls on sysfs pseudo-files
+#   (/sys/fs/selinux/enforce and policy are kernel-controlled;
+#   chmod on sysfs has no effect on most Android kernels)
+# - Added comment explaining the /proc/cmdline permission change
 # ==========================================
 
 MODPATH="${0%/*}"
@@ -60,16 +66,18 @@ resetprop_if_match vendor.boot.mode recovery unknown
 # SELinux
 resetprop_if_diff ro.boot.selinux enforcing
 
-# Handle permissive SELinux - mask it
-if [ "$(cat /sys/fs/selinux/enforce 2>/dev/null)" = "0" ]; then
-    chmod 640 /sys/fs/selinux/enforce 2>/dev/null
-    chmod 440 /sys/fs/selinux/policy 2>/dev/null
-    log_msg "INFO" "Masked permissive SELinux"
-fi
+# NOTE: sysfs pseudo-files (like /sys/fs/selinux/enforce) are
+# backed by kernel handlers. Changing their permissions via chmod
+# is a no-op on virtually all Android kernels. The proper way to
+# hide permissive SELinux is via resetprop (done above) — the
+# property value is what apps read, not the sysfs node directly.
+# We leave sysfs alone to avoid log noise and false confidence.
 
 # Clean any root indicators in /proc
 if [ -d /proc/1 ]; then
-    # Hide kernel command line root flags
+    # Restrict kernel command line read access (may contain root flags)
+    # Note: this only works if the post-fs-data script has sufficient
+    # privilege, which varies by root solution version.
     if [ -r /proc/cmdline ]; then
         chmod 640 /proc/cmdline 2>/dev/null || true
     fi
