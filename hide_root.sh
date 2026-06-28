@@ -27,7 +27,9 @@ resetprop_if_diff persist.sys.adb.notify 0
 dmesg -c >/dev/null 2>&1 || true
 
 # Re-check running target apps
-local found_apps=""
+# Note: 'local' is NOT POSIX sh compatible outside functions.
+# All variables here are scoped to this script's subprocess anyway.
+found_apps=""
 while IFS= read -r pkg || [ -n "$pkg" ]; do
     case "$pkg" in
         ""|\#*) continue ;;

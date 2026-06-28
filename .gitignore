@@ -1,0 +1,38 @@
+# ==========================================
+# UBLESTRAMK - Git Ignore
+#
+# CHANGES (audit-fixes):
+# - Added this file (was missing entirely)
+# ==========================================
+
+# Build outputs
+/build/
+/output/
+/obj/
+/libs/
+
+# Android NDK build artifacts
+*.o
+*.so
+*.a
+*.d
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Flashable ZIPs at repo root (built artifacts)
+/*.zip
+*.sha256
+
+# Local test files
+local.properties
+skipdelprop
