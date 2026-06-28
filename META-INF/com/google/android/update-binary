@@ -29,9 +29,24 @@ elif [ -f /data/adb/ksu/bin/busybox ]; then
     KSU=true
     export KSU
     ui_print "- KernelSU environment detected"
-    # Source minimal functions for KSU
+    # Source minimal functions for KSU (KernelSU does NOT ship Magisk's util_functions)
     MAGISK_VER="KernelSU"
     MAGISK_VER_CODE=99999
+    # Provide minimal stub implementations for functions that customize.sh calls
+    if ! command -v set_perm >/dev/null 2>&1; then
+        set_perm() {
+            local file="$1"
+            local user="$2" group="$3" mode="$4"
+            chown "$user:$group" "$file" 2>/dev/null || true
+            chmod "$mode" "$file" 2>/dev/null || true
+        }
+        set_perm_recursive() {
+            local dir="$1" user="$2" group="$3" dmode="$4" fmode="$5"
+            find "$dir" -type d -exec chmod "$dmode" {} + 2>/dev/null || true
+            find "$dir" -type f -exec chmod "$fmode" {} + 2>/dev/null || true
+            chown -R "$user:$group" "$dir" 2>/dev/null || true
+        }
+    fi
 # Try APatch
 elif [ -f /data/adb/ap/bin/busybox ]; then
     APATCH=true
@@ -39,6 +54,21 @@ elif [ -f /data/adb/ap/bin/busybox ]; then
     ui_print "- APatch environment detected"
     MAGISK_VER="APatch"
     MAGISK_VER_CODE=99999
+    # APatch also does not ship Magisk's util_functions — provide the same stubs
+    if ! command -v set_perm >/dev/null 2>&1; then
+        set_perm() {
+            local file="$1"
+            local user="$2" group="$3" mode="$4"
+            chown "$user:$group" "$file" 2>/dev/null || true
+            chmod "$mode" "$file" 2>/dev/null || true
+        }
+        set_perm_recursive() {
+            local dir="$1" user="$2" group="$3" dmode="$4" fmode="$5"
+            find "$dir" -type d -exec chmod "$dmode" {} + 2>/dev/null || true
+            find "$dir" -type f -exec chmod "$fmode" {} + 2>/dev/null || true
+            chown -R "$user:$group" "$dir" 2>/dev/null || true
+        }
+    fi
 else
     ui_print "! WARNING: Could not detect root solution"
     ui_print "- Attempting generic installation..."
@@ -59,7 +89,7 @@ set_permissions() {
     set_perm $MODPATH/uninstall.sh 0 0 0755
     set_perm $MODPATH/action.sh 0 0 0755
     set_perm $MODPATH/hide_root.sh 0 0 0755
-    
+
     # Zygisk libraries
     if [ -d "$MODPATH/zygisk" ]; then
         set_perm_recursive $MODPATH/zygisk 0 0 0755 0644

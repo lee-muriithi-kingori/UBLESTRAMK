@@ -22,7 +22,6 @@ chmod 644 /data/local/tmp/UBLESTRAMK.log
 
 log_msg "INFO" "All hiding re-applied via action button"
 
-# Show a brief toast if possible
-if command -v service >/dev/null 2>&1; then
-    service call notification 1 s16 "UBLESTRAMK" s16 "Hiding reapplied successfully" i32 1 i32 0 2>/dev/null || true
-fi
+# Note: post-boot toast notifications from a shell script are unreliable
+# across Android versions (service call API varies by SDK). The action
+# button is meant for the Magisk/KernelSU Manager UI; logs are sufficient.

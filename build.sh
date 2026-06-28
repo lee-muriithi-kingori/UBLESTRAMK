@@ -117,6 +117,29 @@ MODULE_BUILD="$BUILD_DIR/$MODULE_ID"
 mkdir -p "$MODULE_BUILD"
 
 # Copy module files
+# Preflight: ensure all required files exist before we try to copy them
+REQUIRED_FILES=(
+    "module.prop"
+    "system.prop"
+    "post-fs-data.sh"
+    "service.sh"
+    "customize.sh"
+    "uninstall.sh"
+    "action.sh"
+    "common_func.sh"
+    "target_apps.txt"
+    "hide_root.sh"
+    "README.md"
+    "META-INF/com/google/android/update-binary"
+)
+for f in "${REQUIRED_FILES[@]}"; do
+    if [ ! -f "$SCRIPT_DIR/$f" ]; then
+        log_error "Missing required file: $f"
+        exit 1
+    fi
+done
+
+# Copy module files
 cp "$SCRIPT_DIR/module.prop" "$MODULE_BUILD/"
 cp "$SCRIPT_DIR/system.prop" "$MODULE_BUILD/"
 cp "$SCRIPT_DIR/post-fs-data.sh" "$MODULE_BUILD/"
@@ -127,7 +150,6 @@ cp "$SCRIPT_DIR/action.sh" "$MODULE_BUILD/"
 cp "$SCRIPT_DIR/common_func.sh" "$MODULE_BUILD/"
 cp "$SCRIPT_DIR/target_apps.txt" "$MODULE_BUILD/"
 cp "$SCRIPT_DIR/hide_root.sh" "$MODULE_BUILD/"
-cp "$SCRIPT_DIR/sepolicy.rule" "$MODULE_BUILD/"
 cp "$SCRIPT_DIR/README.md" "$MODULE_BUILD/"
 
 # Copy META-INF
@@ -161,7 +183,6 @@ chmod 644 "$MODULE_BUILD/system.prop"
 chmod 644 "$MODULE_BUILD/common_func.sh"
 chmod 644 "$MODULE_BUILD/target_apps.txt"
 chmod 644 "$MODULE_BUILD/README.md"
-chmod 644 "$MODULE_BUILD/sepolicy.rule"
 
 # Make scripts executable
 chmod 755 "$MODULE_BUILD/post-fs-data.sh"

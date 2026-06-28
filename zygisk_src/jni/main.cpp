@@ -47,21 +47,24 @@ static const char* TARGET_PACKAGES[] = {
 };
 
 // Mount points to unmount for hiding
+// NOTE: Do NOT include /sbin — it contains the dynamic linker for app_process
+// and unmounting it from the app's namespace will cause immediate crash on launch.
 static const char* HIDE_MOUNT_POINTS[] = {
     "/data/adb/modules",
     "/data/adb/ksu",
     "/data/adb/ap",
     "/debug_ramdisk",
-    "/sbin",
     nullptr
 };
 
-// Suspicious filesystem names
+// Suspicious source names for overlayfs / tmpfs mounts pointing into
+// Magisk/KSU/APatch storage. We intentionally do NOT match the bare
+// "tmpfs" filesystem type — /dev is tmpfs on Android and hiding it would
+// break device access for the target app.
 static const char* SUSPICIOUS_FS[] = {
     "magisk",
     "KSU",
     "APatch",
-    "tmpfs",
     nullptr
 };
 
