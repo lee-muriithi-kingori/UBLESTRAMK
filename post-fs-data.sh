@@ -3,7 +3,10 @@
 # UBLESTRAMK - Post Filesystem Data Script
 # Runs early in boot - before Zygote starts
 #
-# CHANGES (audit-fixes):
+# CHANGES (v0.9.1-beta):
+# - Removed non-standard ro.boot.veritymode.managed property
+#   This property doesn't exist in AOSP and serves as a unique
+#   fingerprint for detection heuristics. (fixes issue #5)
 # - Removed no-op chmod calls on sysfs pseudo-files
 #   (/sys/fs/selinux/enforce and policy are kernel-controlled;
 #   chmod on sysfs has no effect on most Android kernels)
@@ -50,8 +53,13 @@ if [ "$SKIPDELPROP" = false ]; then
     delprop_if_exist ro.boot.verifyerrorpart
 fi
 
-# Verity mode
-resetprop_if_diff ro.boot.veritymode.managed yes
+# NOTE: Removed ro.boot.veritymode.managed property.
+# This is a non-standard property that does not exist in AOSP.
+# Its presence creates a unique fingerprint that sophisticated
+# root detection can use to identify UBLESTRAMK specifically.
+# The standard ro.boot.veritymode is already set to 'enforcing'
+# in system.prop, which is the correct and sufficient way to
+# spoof verified boot state.
 
 # Debug flags
 resetprop_if_diff ro.debuggable 0
