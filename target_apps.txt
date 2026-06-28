@@ -1,0 +1,51 @@
+# ==========================================
+# UBLESTRAMK - Target Apps Configuration
+# Apps that will receive enhanced root hiding
+# Add package names below, one per line
+# Lines starting with # are comments
+# ==========================================
+
+# Uber Driver & Rider apps
+com.ubercab.driver
+com.ubercab
+com.ubercab.eats
+
+# Banking & Financial
+com.chase.sig.android
+com.bankofamerica.cashpromobile
+com.wf.wellsfargomobile
+com.usbank.mobilebanking
+com.citi.citimobile
+com.paypal.android.p2pmobile
+com.venmo
+com.coinbase.android
+com.binance.dev
+com.crypto.mobile
+
+# Payment & Wallet
+com.google.android.apps.walletnfcrel
+com.samsung.android.spay
+
+# Government & Identity
+com.innominds.gsi.android.app
+com.gemalto.idgo
+
+# Streaming with root checks
+com.netflix.mediaclient
+com.disney.disneyplus
+com.hulu.plus
+com.spotify.music
+
+# Games with root checks
+com.nianticlabs.pokemongo
+com.nianticlabs.pokemongo.beta
+com.supercell.clashofclans
+
+# Work & Enterprise
+com.microsoft.teams
+com.slack
+com.zoom.us
+
+# Other sensitive apps
+com.amazon.mp3
+com.starbucks.mobilecard
