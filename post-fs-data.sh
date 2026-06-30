@@ -3,14 +3,17 @@
 # UBLESTRAMK - Post Filesystem Data Script
 # Runs early in boot - before Zygote starts
 #
+# CHANGES (v1.0.0):
+# - Added keybox/keystore early property spoofing
+#   Sets keystore backend properties before Zygote initializes
+#   This ensures apps see consistent attestation capability
+# - Added ro.hardware.keystore spoofing
+# - Validates keybox.xml exists and is readable
+# - Added keybox environment setup for Zygisk companion
+#
 # CHANGES (v0.9.1-beta):
 # - Removed non-standard ro.boot.veritymode.managed property
-#   This property doesn't exist in AOSP and serves as a unique
-#   fingerprint for detection heuristics. (fixes issue #5)
 # - Removed no-op chmod calls on sysfs pseudo-files
-#   (/sys/fs/selinux/enforce and policy are kernel-controlled;
-#   chmod on sysfs has no effect on most Android kernels)
-# - Added comment explaining the /proc/cmdline permission change
 # ==========================================
 
 MODPATH="${0%/*}"
@@ -53,14 +56,6 @@ if [ "$SKIPDELPROP" = false ]; then
     delprop_if_exist ro.boot.verifyerrorpart
 fi
 
-# NOTE: Removed ro.boot.veritymode.managed property.
-# This is a non-standard property that does not exist in AOSP.
-# Its presence creates a unique fingerprint that sophisticated
-# root detection can use to identify UBLESTRAMK specifically.
-# The standard ro.boot.veritymode is already set to 'enforcing'
-# in system.prop, which is the correct and sufficient way to
-# spoof verified boot state.
-
 # Debug flags
 resetprop_if_diff ro.debuggable 0
 resetprop_if_diff ro.force.debuggable 0
@@ -74,18 +69,49 @@ resetprop_if_match vendor.boot.mode recovery unknown
 # SELinux
 resetprop_if_diff ro.boot.selinux enforcing
 
-# NOTE: sysfs pseudo-files (like /sys/fs/selinux/enforce) are
-# backed by kernel handlers. Changing their permissions via chmod
-# is a no-op on virtually all Android kernels. The proper way to
-# hide permissive SELinux is via resetprop (done above) — the
-# property value is what apps read, not the sysfs node directly.
-# We leave sysfs alone to avoid log noise and false confidence.
+# v1.0.0: Keystore/keymint early property spoofing
+# These must be set before Zygote starts to ensure keystore
+# service initializes with the spoofed values
+log_msg "INFO" "Setting up keybox/keystore early properties"
+
+# Report TEE-backed keystore
+resetprop_if_diff ro.hardware.keystore teetz
+resetprop_if_diff ro.security.keystore.deserializer_type tee
+
+# KeyMint/Gatekeeper backend
+resetprop_if_diff ro.hardware.keymint trusty
+resetprop_if_diff ro.hardware.gatekeeper teetz
+
+# Crypto state consistency
+resetprop_if_diff ro.crypto.state encrypted
+resetprop_if_diff ro.crypto.type file
+
+# Boot control
+resetprop_if_diff ro.hardware.bootctrl default
+
+# v1.0.0: Validate keybox.xml if present
+if [ -f "$MODPATH/keybox.xml" ]; then
+    if [ -r "$MODPATH/keybox.xml" ]; then
+        local kb_size=$(stat -c%s "$MODPATH/keybox.xml" 2>/dev/null)
+        log_msg "INFO" "keybox.xml found (${kb_size} bytes)"
+        
+        # Check if it's still a template (has PLACEHOLDER markers)
+        if grep -q "PLACEHOLDER" "$MODPATH/keybox.xml" 2>/dev/null; then
+            log_msg "WARN" "keybox.xml contains PLACEHOLDER values - attestation will use embedded certificates"
+            log_msg "WARN" "Replace placeholders with real keys for better compatibility"
+        fi
+    else
+        log_msg "WARN" "keybox.xml exists but is not readable"
+    fi
+else
+    log_msg "INFO" "No keybox.xml found - using embedded certificate templates"
+fi
+
+# v1.0.0: Set up keybox environment for Zygisk
+setup_keybox_environment 1
 
 # Clean any root indicators in /proc
 if [ -d /proc/1 ]; then
-    # Restrict kernel command line read access (may contain root flags)
-    # Note: this only works if the post-fs-data script has sufficient
-    # privilege, which varies by root solution version.
     if [ -r /proc/cmdline ]; then
         chmod 640 /proc/cmdline 2>/dev/null || true
     fi
@@ -95,5 +121,8 @@ fi
 if [ -d "$MODPATH/zygisk" ]; then
     log_msg "INFO" "Zygisk libraries detected"
 fi
+
+# v1.0.0: Create keybox state file for inter-process communication
+echo "1" > "$MODPATH/.keybox_ready" 2>/dev/null
 
 log_msg "INFO" "=== post-fs-data completed ==="
