@@ -1,9 +1,9 @@
 id=UBLESTRAMK
 name=UBLESTRAMK [BETA]
-version=v0.9.1-beta
-versionCode=901
+version=v1.0.0
+versionCode=1000
 author=lee-muriithi-kingori
-description=Universal Boot-Lock Evasion & Stealth Root Admin Module for Magisk/KernelSU/APatch - Hide root from Uber Driver, M-Pesa, banking apps & more. Unmounts modules while retaining functionality. Spoofs locked bootloader & clean device state. v0.9.1-beta: Fixed boot.mode detection, added African banking apps, removed fingerprintable properties, improved monitor performance.
+description=Universal Boot-Lock Evasion & Stealth Root Admin Module for Magisk/KernelSU/APatch. v1.0.0: Added hardware attestation bypass (keybox/keystore), spoofs TEE/StrongBox security level for Play Integrity API, hides root from Uber Driver, M-Pesa, all major banking apps. Includes Zygisk native hooks for deep system-level hiding.
 updateJson=https://raw.githubusercontent.com/lee-muriithi-kingori/UBLESTRAMK/main/update.json
 donate=https://github.com/sponsors/lee-muriithi-kingori
 support=https://github.com/lee-muriithi-kingori/UBLESTRAMK/issues
