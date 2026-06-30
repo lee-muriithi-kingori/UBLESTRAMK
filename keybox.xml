@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  UBLESTRAMK - Keybox Configuration File
+  
+  This file contains device-specific attestation key configuration.
+  It mimics the format of a real Android keybox.xml file used for
+  hardware-backed attestation (KeyMint/StrongBox/TEE).
+  
+  INSTRUCTIONS:
+  1. This is a TEMPLATE - replace the placeholder values with real keys
+  2. To obtain real attestation keys, extract from a stock device using:
+     adb shell "cat /data/misc/keystore/persistent.sqlite" | strings
+     OR use a keybox extraction tool from XDA Developers
+  3. For production use, purchase valid keybox from a trusted provider
+  4. The certificate chain in keybox_hook.cpp must match these keys
+  
+  SECURITY LEVELS:
+  - 0: Software-only (no hardware backing)
+  - 1: TEE (Trusted Execution Environment) - most common
+  - 2: StrongBox (dedicated secure hardware) - most secure
+  
+  Set the desired level in module configuration.
+-->
+
+<Keybox>
+  <Version>1.0.0</Version>
+  <Device>
+    <!-- Device identification - matches property spoofing -->
+    <Brand>google</Brand>
+    <Manufacturer>Google</Manufacturer>
+    <Product>panther</Product>
+    <Model>Pixel 7</Model>
+    <Board>panther</Board>
+    
+    <!-- Security level: 1=TEE, 2=StrongBox -->
+    <SecurityLevel>1</SecurityLevel>
+    
+    <!-- Key algorithm preference -->
+    <KeyAlgorithm>EC_P256</KeyAlgorithm>
+    
+    <!-- Device IDs -->
+    <DeviceID type="serial">PLACEHOLDER_SERIAL</DeviceID>
+    <DeviceID type="imei">PLACEHOLDER_IMEI</DeviceID>
+    <DeviceID type="meid">PLACEHOLDER_MEID</DeviceID>
+  </Device>
+  
+  <Keys>
+    <!-- 
+      EC P-256 Attestation Key Pair
+      Replace the Base64-encoded key material with real keys
+    -->
+    <Key algorithm="ec_p256" purpose="attestation">
+      <PrivateKey format="pkcs8">
+        <!-- PLACEHOLDER: Replace with real EC P-256 private key -->
+        MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC5...</PrivateKey>
+      <CertificateChain>
+        <!-- Device attestation certificate -->
+        <Certificate index="0">
+          <!-- PLACEHOLDER: Replace with real device attestation cert -->
+          MIIDXTCCAkWgAwIBAgIQC2Z5l...</Certificate>
+        <!-- Google Hardware Attestation Intermediate CA -->
+        <Certificate index="1">
+          <!-- PLACEHOLDER: Replace with real intermediate CA cert -->
+          MIIDfTCCAuagAwIBAgIDE2WwMA...</Certificate>
+        <!-- Google Hardware Attestation Root CA -->
+        <Certificate index="2">
+          <!-- This is the public Google root CA - can be kept as-is -->
+          MIIDfTCCAuagAwIBAgIDE2WwMA0GCSqGSIb3DQEBCwUAMIG...</Certificate>
+      </CertificateChain>
+    </Key>
+    
+    <!-- 
+      RSA 2048 Attestation Key Pair (fallback)
+      Some apps specifically request RSA keys
+    -->
+    <Key algorithm="rsa_2048" purpose="attestation">
+      <PrivateKey format="pkcs8">
+        <!-- PLACEHOLDER: Replace with real RSA 2048 private key -->
+        MIIEpAIBAAKCAQEAy8Dbv8prQ7l...</PrivateKey>
+      <CertificateChain>
+        <Certificate index="0">
+          <!-- PLACEHOLDER: Replace with real RSA device attestation cert -->
+          MIIDXTCCAkWgAwIBAgIQC2Z5l2eO...</Certificate>
+        <Certificate index="1">
+          <!-- PLACEHOLDER: Replace with real intermediate CA cert -->
+          MIIDfTCCAuagAwIBAgIDE2WwMA0G...</Certificate>
+        <Certificate index="2">
+          <!-- Google Hardware Attestation Root CA -->
+          MIIDfTCCAuagAwIBAgIDE2WwMA0GCSqGSIb3DQEBCwUAMIG...</Certificate>
+      </CertificateChain>
+    </Key>
+  </Keys>
+  
+  <Properties>
+    <!-- Properties to spoof during attestation -->
+    <Property name="ro.boot.verifiedbootstate">green</Property>
+    <Property name="ro.boot.vbmeta.device_state">locked</Property>
+    <Property name="ro.boot.flash.locked">1</Property>
+    <Property name="ro.boot.veritymode">enforcing</Property>
+    <Property name="ro.boot.warranty_bit">0</Property>
+    <Property name="ro.secureboot.lockstate">locked</Property>
+    <Property name="ro.boot.secureboot">1</Property>
+  </Properties>
+  
+  <Configuration>
+    <!-- Module behavior settings -->
+    
+    <!-- 
+      Spoofed security level for attestation responses:
+      - "tee" = Report TEE-backed keys (most compatible)
+      - "strongbox" = Report StrongBox keys (most secure-looking)
+      - "software" = Report software keys (least suspicious to some apps)
+    -->
+    <SpoofedSecurityLevel>tee</SpoofedSecurityLevel>
+    
+    <!--
+      Attestation handling mode:
+      - "spoof" = Return spoofed certificates (default)
+      - "block" = Return error "not supported" (for stubborn apps)
+      - "pass_through" = Don't intercept (let real keystore handle)
+    -->
+    <AttestationMode>spoof</AttestationMode>
+    
+    <!--
+      Apps that should receive attestation spoofing
+      Add package names to also target beyond the built-in list
+    -->
+    <TargetApps>
+      <!-- Built-in targets are in target_apps.txt -->
+      <!-- Add additional targets here if needed -->
+      <!-- <App package="com.example.bank" /> -->
+    </TargetApps>
+  </Configuration>
+</Keybox>
