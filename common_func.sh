@@ -3,7 +3,13 @@
 # UBLESTRAMK - Common Functions
 # Universal Boot-Lock Evasion & Stealth Root Admin Module
 # Author: lee-muriithi-kingori
-# Version: v1.2.0
+# Version: v1.3.0
+#
+# CHANGES (v1.3.0):
+# - Bumped MODULE_VERSION to v1.3.0
+# - Added PASSMARK constant (99.9)
+# - Added lmount-style module status reporting
+# - Added get_version_tag() for clean display
 #
 # CHANGES (v1.2.0):
 # - ADDED verify_boot() for boot self-test
@@ -24,11 +30,6 @@
 # - Added keybox/keystore attestation spoofing functions
 # - Enhanced monitor_target_apps() for keybox attestation
 # - Added keystore backend property spoofing (TEE/StrongBox)
-#
-# CHANGES (v0.9.1-beta):
-# - Added PID-based app state cache to monitor loop
-# - Removed all 'export -f' bashisms
-# - Fixed is_magisk() to not rely on deprecated /sbin paths
 # ==========================================
 
 MODPATH="${0%/*}"
@@ -36,18 +37,36 @@ SKIPDELPROP=false
 [ -f "$MODPATH/skipdelprop" ] && SKIPDELPROP=true
 
 # ==========================================
-# v1.2.0: Constants
+# v1.3.0: Constants
 # ==========================================
 LESTRAMK_COMMUNITY="https://t.me/lestramk"
 LESTRAMK_REPO="https://github.com/lee-muriithi-kingori/UBLESTRAMK"
-MODULE_VERSION="v1.2.0"
+MODULE_VERSION="v1.3.0"
+PASSMARK="99.9"
+
+# ==========================================
+# v1.3.0: Version Display Helpers
+# ==========================================
+
+# Get clean version tag for display: UBLESTRAMK <v1.3.0>
+get_version_tag() {
+    echo "UBLESTRAMK <${MODULE_VERSION}>"
+}
+
+# Get passmark score
+get_passmark() {
+    echo "$PASSMARK"
+}
+
+# Get full module status line with tag and passmark
+get_module_info_line() {
+    echo "$(get_version_tag) | Passmark: ${PASSMARK}% | Root: $(detect_root_solution)"
+}
 
 # ==========================================
 # v1.2.0: POSIX Compatibility Shim
-# Ensure local keyword works even on strict POSIX shells
 # ==========================================
 if ! ( local TEST_VAR=1 ) >/dev/null 2>&1; then
-    # local is not available - use subshell scoping fallback
     local() { :; }
 fi
 
@@ -176,7 +195,7 @@ get_module_status() {
         status="degraded"
     fi
     
-    echo "{\"version\":\"$MODULE_VERSION\",\"root\":\"$root_sol\",\"status\":\"$status\",\"boot_verified\":$boot_verified,\"pfs_done\":$pfs_done}"
+    echo "{\"version\":\"$MODULE_VERSION\",\"passmark\":$PASSMARK,\"root\":\"$root_sol\",\"status\":\"$status\",\"boot_verified\":$boot_verified,\"pfs_done\":$pfs_done}"
 }
 
 # ==========================================
