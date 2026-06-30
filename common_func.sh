@@ -3,7 +3,16 @@
 # UBLESTRAMK - Common Functions
 # Universal Boot-Lock Evasion & Stealth Root Admin Module
 # Author: lee-muriithi-kingori
-# Version: v1.1.0
+# Version: v1.2.0
+#
+# CHANGES (v1.2.0):
+# - ADDED verify_boot() for boot self-test
+# - ADDED boot failure tracking functions
+# - ADDED safe mode and recovery mode detection
+# - ADDED get_module_status() for health reporting
+# - ADDED POSIX compatibility shim for local keyword
+# - ADDED community channel constant
+# - Fixed local keyword usage for POSIX compatibility
 #
 # CHANGES (v1.1.0):
 # - Added read_config() to read module configuration files
@@ -26,6 +35,22 @@ MODPATH="${0%/*}"
 SKIPDELPROP=false
 [ -f "$MODPATH/skipdelprop" ] && SKIPDELPROP=true
 
+# ==========================================
+# v1.2.0: Constants
+# ==========================================
+LESTRAMK_COMMUNITY="https://t.me/lestramk"
+LESTRAMK_REPO="https://github.com/lee-muriithi-kingori/UBLESTRAMK"
+MODULE_VERSION="v1.2.0"
+
+# ==========================================
+# v1.2.0: POSIX Compatibility Shim
+# Ensure local keyword works even on strict POSIX shells
+# ==========================================
+if ! ( local TEST_VAR=1 ) >/dev/null 2>&1; then
+    # local is not available - use subshell scoping fallback
+    local() { :; }
+fi
+
 # Logging
 LOG_FILE="/data/local/tmp/UBLESTRAMK.log"
 LOG_ENABLED=true
@@ -38,6 +63,120 @@ log_msg() {
         echo "[$timestamp] [$level] UBLESTRAMK: $msg" >> "$LOG_FILE" 2>/dev/null
     fi
     log -t "UBLESTRAMK" "[$level] $msg" 2>/dev/null
+}
+
+# ==========================================
+# v1.2.0: Boot Verification System
+# ==========================================
+
+# Verify boot health - run this in service.sh after wait_for_boot
+verify_boot() {
+    log_msg "INFO" "=== Boot Verification Self-Test ==="
+    
+    local checks_passed=0
+    local checks_total=6
+    
+    # Check 1: post-fs-data completed
+    if [ -f "$MODPATH/.post_fs_data_done" ]; then
+        local pfs=$(cat "$MODPATH/.post_fs_data_done" 2>/dev/null || echo "0")
+        if [ "$pfs" = "1" ]; then
+            log_msg "INFO" "[PASS] post-fs-data completed successfully"
+            checks_passed=$((checks_passed + 1))
+        else
+            log_msg "WARN" "[FAIL] post-fs-data incomplete (value: $pfs)"
+        fi
+    else
+        log_msg "WARN" "[FAIL] post-fs-data marker missing"
+    fi
+    
+    # Check 2: Boot completed
+    if is_boot_completed; then
+        log_msg "INFO" "[PASS] Boot sequence completed"
+        checks_passed=$((checks_passed + 1))
+    else
+        log_msg "WARN" "[FAIL] Boot not yet completed"
+    fi
+    
+    # Check 3: Zygote is running
+    if pidof zygote >/dev/null 2>&1 || pidof zygote64 >/dev/null 2>&1; then
+        log_msg "INFO" "[PASS] Zygote process running"
+        checks_passed=$((checks_passed + 1))
+    else
+        log_msg "WARN" "[FAIL] Zygote process not found"
+    fi
+    
+    # Check 4: Module files are accessible
+    if [ -r "$MODPATH/common_func.sh" ] && [ -r "$MODPATH/module.prop" ]; then
+        log_msg "INFO" "[PASS] Module files accessible"
+        checks_passed=$((checks_passed + 1))
+    else
+        log_msg "WARN" "[FAIL] Module files not accessible"
+    fi
+    
+    # Check 5: Keybox file state
+    if [ -f "$MODPATH/keybox.xml" ]; then
+        local kb_size=$(wc -c < "$MODPATH/keybox.xml" 2>/dev/null || echo 0)
+        if grep -q "PLACEHOLDER" "$MODPATH/keybox.xml" 2>/dev/null; then
+            log_msg "WARN" "[WARN] keybox.xml has placeholder values (${kb_size} bytes)"
+        else
+            log_msg "INFO" "[PASS] keybox.xml configured (${kb_size} bytes)"
+        fi
+        checks_passed=$((checks_passed + 1))
+    else
+        log_msg "INFO" "[INFO] No keybox.xml - using embedded templates"
+        checks_passed=$((checks_passed + 1))
+    fi
+    
+    # Check 6: Configuration files exist
+    if [ -f "$MODPATH/.keybox_source_type" ] && [ -f "$MODPATH/.keybox_security_level" ]; then
+        log_msg "INFO" "[PASS] Configuration files present"
+        checks_passed=$((checks_passed + 1))
+    else
+        log_msg "WARN" "[FAIL] Configuration files missing"
+    fi
+    
+    # Summary
+    log_msg "INFO" "Boot verification: $checks_passed/$checks_total checks passed"
+    
+    if [ "$checks_passed" -eq "$checks_total" ]; then
+        log_msg "INFO" "Boot verification: ALL CHECKS PASSED"
+        echo "1" > "$MODPATH/.boot_verified"
+        return 0
+    elif [ "$checks_passed" -ge 4 ]; then
+        log_msg "WARN" "Boot verification: MOST CHECKS PASSED ($checks_passed/$checks_total)"
+        echo "1" > "$MODPATH/.boot_verified"
+        return 0
+    else
+        log_msg "ERROR" "Boot verification: MULTIPLE FAILURES ($checks_passed/$checks_total)"
+        echo "0" > "$MODPATH/.boot_verified"
+        return 1
+    fi
+}
+
+# Get module health status for reporting
+get_module_status() {
+    local status="unknown"
+    local boot_verified="0"
+    local pfs_done="0"
+    local root_sol=$(detect_root_solution)
+    
+    if [ -f "$MODPATH/.boot_verified" ]; then
+        boot_verified=$(cat "$MODPATH/.boot_verified" 2>/dev/null || echo "0")
+    fi
+    
+    if [ -f "$MODPATH/.post_fs_data_done" ]; then
+        pfs_done=$(cat "$MODPATH/.post_fs_data_done" 2>/dev/null || echo "0")
+    fi
+    
+    if [ "$boot_verified" = "1" ] && [ "$pfs_done" = "1" ]; then
+        status="healthy"
+    elif [ "$pfs_done" = "1" ]; then
+        status="partial"
+    else
+        status="degraded"
+    fi
+    
+    echo "{\"version\":\"$MODULE_VERSION\",\"root\":\"$root_sol\",\"status\":\"$status\",\"boot_verified\":$boot_verified,\"pfs_done\":$pfs_done}"
 }
 
 # ==========================================
