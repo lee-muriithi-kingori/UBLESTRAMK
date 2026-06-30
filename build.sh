@@ -131,6 +131,10 @@ REQUIRED_FILES=(
     "hide_root.sh"
     "README.md"
     "META-INF/com/google/android/update-binary"
+    "webroot/index.html"
+    "keybox.xml"
+    "keybox_updater.sh"
+    "update_service_addon.sh"
 )
 for f in "${REQUIRED_FILES[@]}"; do
     if [ ! -f "$SCRIPT_DIR/$f" ]; then
@@ -151,9 +155,16 @@ cp "$SCRIPT_DIR/common_func.sh" "$MODULE_BUILD/"
 cp "$SCRIPT_DIR/target_apps.txt" "$MODULE_BUILD/"
 cp "$SCRIPT_DIR/hide_root.sh" "$MODULE_BUILD/"
 cp "$SCRIPT_DIR/README.md" "$MODULE_BUILD/"
+cp "$SCRIPT_DIR/keybox.xml" "$MODULE_BUILD/"
+cp "$SCRIPT_DIR/keybox_updater.sh" "$MODULE_BUILD/"
+cp "$SCRIPT_DIR/update_service_addon.sh" "$MODULE_BUILD/"
 
 # Copy META-INF
 cp -r "$SCRIPT_DIR/META-INF" "$MODULE_BUILD/"
+
+# Copy WebUI assets (webroot directory)
+log_info "Copying WebUI assets..."
+cp -r "$SCRIPT_DIR/webroot" "$MODULE_BUILD/"
 
 # Update version in module.prop
 sed -i "s/^version=.*/version=$VERSION/" "$MODULE_BUILD/module.prop"
@@ -183,6 +194,8 @@ chmod 644 "$MODULE_BUILD/system.prop"
 chmod 644 "$MODULE_BUILD/common_func.sh"
 chmod 644 "$MODULE_BUILD/target_apps.txt"
 chmod 644 "$MODULE_BUILD/README.md"
+chmod 644 "$MODULE_BUILD/keybox.xml"
+chmod 644 "$MODULE_BUILD/update_service_addon.sh"
 
 # Make scripts executable
 chmod 755 "$MODULE_BUILD/post-fs-data.sh"
@@ -191,7 +204,12 @@ chmod 755 "$MODULE_BUILD/customize.sh"
 chmod 755 "$MODULE_BUILD/uninstall.sh"
 chmod 755 "$MODULE_BUILD/action.sh"
 chmod 755 "$MODULE_BUILD/hide_root.sh"
+chmod 755 "$MODULE_BUILD/keybox_updater.sh"
 chmod 755 "$MODULE_BUILD/META-INF/com/google/android/update-binary"
+
+# Set WebUI permissions
+chmod -R 755 "$MODULE_BUILD/webroot"
+find "$MODULE_BUILD/webroot" -type f -exec chmod 644 {} \;
 
 # Create flashable ZIP
 ZIP_NAME="${MODULE_NAME}-${VERSION}.zip"
@@ -243,7 +261,20 @@ echo "  File: $ZIP_NAME"
 echo "  Size: $FILESIZE"
 echo "  Output: $OUTPUT_DIR/"
 echo ""
-echo "  Files:"
+echo "  Files included:"
+echo "    - Core scripts (post-fs-data, service, customize, uninstall, action)"
+echo "    - Common functions (common_func.sh)"
+echo "    - Root hiding (hide_root.sh)"
+echo "    - Keybox files (keybox.xml, keybox_updater.sh)"
+echo "    - Service addon (update_service_addon.sh)"
+echo "    - WebUI dashboard (webroot/)"
+echo "    - Target apps list (target_apps.txt)"
+echo "    - System properties (system.prop)"
+echo "    - Module metadata (module.prop, README.md)"
+if [ -d "$MODULE_BUILD/zygisk" ]; then
+    echo "    - Zygisk native libraries"
+fi
+echo ""
 ls -la "$OUTPUT_DIR/"
 echo ""
 echo "============================================"
