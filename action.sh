@@ -1,12 +1,13 @@
 #!/system/bin/sh
 # ==========================================
 # UBLESTRAMK - Action Script
-# Quick actions from Magisk/KernelSU Manager
+# Opens the WebUI for module configuration
 #
-# CHANGES (v1.1.0):
-# - Added keybox update action
-# - Added config reload action
-# - Enhanced status output
+# CHANGES (v1.2.0):
+# - Action button now opens WebUI directly instead of terminal menu
+# - Added browser fallback for root managers without WebUI support
+# - Added community channel link
+# - Added boot verification status display
 # ==========================================
 
 MODPATH="${0%/*}"
@@ -14,106 +15,106 @@ MODPATH="${0%/*}"
 
 LOG_FILE="/data/local/tmp/UBLESTRAMK.log"
 
-echo "================================"
-echo "  UBLESTRAMK Quick Actions"
-echo "  Version: $(get_version)"
-echo "================================"
-echo ""
-echo "Select action:"
-echo ""
-echo "  [1] Apply hiding now"
-echo "  [2] Update keybox"
-echo "  [3] Check keybox status"
-echo "  [4] Reload configuration"
-echo "  [5] View recent logs"
-echo "  [6] Open WebUI (info)"
-echo ""
-echo "  [0] Exit"
-echo ""
-echo -n "Choice: "
+# Function to check if we can open WebUI
+open_webui() {
+    local webui_url="file:///data/adb/modules/UBLESTRAMK/webroot/index.html"
+    local has_opened=false
 
-read choice
+    # Try to open via KernelSU WebUI intent
+    if is_kernelsu; then
+        # KernelSU Manager handles webroot= module.prop automatically
+        # when user taps the module card - this script is the fallback
+        log_msg "INFO" "KernelSU detected - attempting WebUI open"
+        
+        # Try to open via am start with KernelSU WebUI intent
+        if command -v am >/dev/null 2>&1; then
+            # Try KernelSU Manager WebUI intent
+            am start -a android.intent.action.VIEW \
+                -d "$webui_url" \
+                -n me.weishu.kernelsu/.ui.webui.WebUIActivity \
+                2>/dev/null && has_opened=true
+        fi
+    fi
 
-case "$choice" in
-    1)
-        echo ""
-        echo "Applying root hiding..."
-        spoof_bootloader_locked
-        hide_build_properties
-        spoof_keybox_properties
-        hide_keystore_traces
-        echo "Done! Root hiding applied."
-        log_msg "INFO" "Manual hiding applied via action button"
-        ;;
-    2)
-        echo ""
-        if [ -f "$MODPATH/keybox_updater.sh" ]; then
-            echo "Updating keybox..."
-            sh "$MODPATH/keybox_updater.sh" --force
-            echo "Keybox update completed."
-        else
-            echo "Keybox updater not found!"
+    # Try APatch WebUI intent
+    if [ "$has_opened" = false ] && is_apatch; then
+        log_msg "INFO" "APatch detected - attempting WebUI open"
+        
+        if command -v am >/dev/null 2>&1; then
+            am start -a android.intent.action.VIEW \
+                -d "$webui_url" \
+                -n me.bmax.apatch/.ui.webui.WebUIActivity \
+                2>/dev/null && has_opened=true
         fi
-        ;;
-    3)
-        echo ""
-        if [ -f "$MODPATH/keybox.xml" ]; then
-            echo "Keybox Status:"
-            echo "--------------"
-            local has_placeholders=$(grep -c "PLACEHOLDER" "$MODPATH/keybox.xml" 2>/dev/null || echo 0)
-            local kb_size=$(stat -c%s "$MODPATH/keybox.xml" 2>/dev/null)
-            echo "File: $MODPATH/keybox.xml"
-            echo "Size: ${kb_size} bytes"
-            echo "Status: $([ "$has_placeholders" -gt 0 ] && echo 'TEMPLATE (needs real keys)' || echo 'CONFIGURED')"
-            echo ""
-            echo "Source: $(get_keybox_source_type)"
-            echo "Attestation: $(get_attestation_mode)"
-            echo "Security Level: $(get_security_level)"
-        else
-            echo "No keybox.xml found!"
+    fi
+
+    # Generic fallback - open in default browser
+    if [ "$has_opened" = false ]; then
+        log_msg "INFO" "Attempting browser fallback for WebUI"
+        
+        if command -v am >/dev/null 2>&1; then
+            am start -a android.intent.action.VIEW \
+                -d "$webui_url" \
+                2>/dev/null && has_opened=true
         fi
-        ;;
-    4)
+    fi
+
+    if [ "$has_opened" = true ]; then
+        log_msg "INFO" "WebUI opened successfully"
+        echo "Opening UBLESTRAMK WebUI..."
+    else
+        log_msg "WARN" "Could not open WebUI automatically"
         echo ""
-        echo "Reloading configuration..."
-        if [ -f "$MODPATH/update_service_addon.sh" ]; then
-            . "$MODPATH/update_service_addon.sh"
-            ensure_webui_config
-        fi
-        # Re-apply settings
-        spoof_keybox_properties
-        hide_build_properties
-        echo "Configuration reloaded."
-        log_msg "INFO" "Configuration reloaded via action button"
-        ;;
-    5)
+        echo "================================"
+        echo "  UBLESTRAMK WebUI Access"
+        echo "================================"
         echo ""
-        echo "Recent logs (last 30 lines):"
-        echo "----------------------------"
-        tail -30 "$LOG_FILE" 2>/dev/null || echo "No logs available"
-        ;;
-    6)
-        echo ""
-        echo "WebUI Access:"
-        echo "-------------"
         echo "For KernelSU: Open KernelSU Manager >"
         echo "  Modules > UBLESTRAMK > Tap module card"
         echo ""
-        echo "For Magisk: Use a WebUI-compatible Magisk"
-        echo "  build or access via browser at:"
-        echo "  file:///data/adb/modules/UBLESTRAMK/webroot/"
-        ;;
-    0)
-        echo "Exiting..."
-        exit 0
-        ;;
-    *)
-        echo "Invalid choice"
-        ;;
-esac
+        echo "For Magisk/APatch: Open your browser at:"
+        echo "  $webui_url"
+        echo ""
+        echo "Community: https://t.me/lestramk"
+        echo ""
+        echo "Press Enter to continue..."
+        read
+    fi
+}
+
+# Show module status and open WebUI
+echo "================================"
+echo "  UBLESTRAMK"
+echo "  Version: $(get_version)"
+echo "  Root: $(detect_root_solution)"
+echo "================================"
+echo ""
+
+# Check boot verifier status
+if [ -f "$MODPATH/.post_fs_data_done" ]; then
+    echo "[OK] Module initialized successfully"
+else
+    echo "[!] Module initialization may be incomplete"
+    echo "    Consider checking logs if issues occur"
+fi
+
+# Show keybox status
+if [ -f "$MODPATH/keybox.xml" ]; then
+    local kb_has_ph=$(grep -c "PLACEHOLDER" "$MODPATH/keybox.xml" 2>/dev/null || echo 0)
+    if [ "$kb_has_ph" -gt 0 ]; then
+        echo "[!] Keybox has placeholder values - update recommended"
+    else
+        echo "[OK] Keybox configured"
+    fi
+else
+    echo "[!] No keybox.xml found"
+fi
 
 echo ""
-echo "Press Enter to continue..."
-read
-echo "Returning to menu..."
-sh "$0"
+echo "Opening WebUI..."
+echo ""
+
+open_webui
+
+log_msg "INFO" "Action button triggered - WebUI opened"
+exit 0
