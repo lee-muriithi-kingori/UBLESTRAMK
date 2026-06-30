@@ -1,9 +1,9 @@
 id=UBLESTRAMK
 name=UBLESTRAMK
-version=v1.3.0
-versionCode=1300
+version=v1.4.0
+versionCode=1400
 author=lee-muriithi-kingori
-description=Universal Boot-Lock Evasion & Stealth Root Admin Module for Magisk/KernelSU/APatch. v1.3.0: WebUI-first action button, tag-based versioning, 99.9% passmark. Telegram: @lestramk
+description=Universal Boot-Lock Evasion & Stealth Root Admin Module for Magisk/KernelSU/APatch. v1.4.0: Fixed WebUI settings persistence, POSIX compliance, keybox validation, 99.9% passmark. Telegram: @lestramk
 updateJson=https://raw.githubusercontent.com/lee-muriithi-kingori/UBLESTRAMK/main/update.json
 donate=https://github.com/sponsors/lee-muriithi-kingori
 support=https://github.com/lee-muriithi-kingori/UBLESTRAMK/issues
