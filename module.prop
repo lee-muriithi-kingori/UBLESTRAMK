@@ -1,13 +1,12 @@
 id=UBLESTRAMK
-name=UBLESTRAMK [STABLE]
-version=v1.2.0
-versionCode=1200
+name=UBLESTRAMK
+version=v1.3.0
+versionCode=1300
 author=lee-muriithi-kingori
-description=Universal Boot-Lock Evasion & Stealth Root Admin Module for Magisk/KernelSU/APatch. v1.2.0: Fixed Samsung boot hang at second logo, added boot verification system, auto-browser open on install, WebUI action button. Telegram: @lestramk
+description=Universal Boot-Lock Evasion & Stealth Root Admin Module for Magisk/KernelSU/APatch. v1.3.0: WebUI-first action button, tag-based versioning, 99.9% passmark. Telegram: @lestramk
 updateJson=https://raw.githubusercontent.com/lee-muriithi-kingori/UBLESTRAMK/main/update.json
 donate=https://github.com/sponsors/lee-muriithi-kingori
 support=https://github.com/lee-muriithi-kingori/UBLESTRAMK/issues
-# Community channel
 community=https://t.me/lestramk
-# KernelSU WebUI support - points to the webui directory
 webroot=webroot
+passmark=99.9
