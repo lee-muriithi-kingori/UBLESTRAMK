@@ -5,6 +5,107 @@ All notable changes to UBLESTRAMK will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.0.0] - 2026-06-30
+
+### MAJOR FEATURE: Hardware Attestation Bypass (Keybox/Keystore)
+
+This release introduces comprehensive hardware attestation bypass capabilities, targeting banking apps, rideshare platforms, and streaming services that use Google Play Integrity API with hardware-backed key attestation.
+
+### Added
+
+#### Keybox/Keystore Attestation Hooking
+- **Native keybox hooking subsystem** (`zygisk_src/jni/keybox_hook.cpp/.h`):
+  - Intercepts `KeyGenParameterSpec.Builder.setAttestationChallenge()` calls
+  - Hooks `IKeyMintDevice` attestation certificate generation
+  - Provides pre-generated certificate chains (TEE + Google Root CA)
+  - Supports TEE (`ro.hardware.keystore=teetz`) and StrongBox security level spoofing
+  - Configurable attestation mode: spoof, block, or pass-through
+  - Validates `keybox.xml` at module load time
+
+- **Attestation certificate templates**:
+  - Google Hardware Attestation Root CA (public)
+  - Device attestation certificate (TEE-backed template)
+  - Certificate chain generation for `getAttestationCertificate()` responses
+
+- **Target app attestation detection** — Automatically applies keybox hiding for 22+ known attestation apps:
+  - Banking: Chase, BofA, Wells Fargo, PayPal, Venmo, M-Pesa, Equity, KCB, Co-op, Absa, Opay, PalmPay, Kuda, Chipper, Revolut, Wise
+  - Rideshare: Uber (Driver/Rider/Eats), Bolt
+  - Streaming: Netflix
+  - Games: Pokemon GO
+  - Enterprise: Microsoft Teams
+
+- **Keybox configuration file** (`keybox.xml`):
+  - Standard Android keybox.xml format
+  - Supports EC P-256 and RSA 2048 keys
+  - Configurable security level and attestation mode
+  - Property spoofing section (`ro.boot.verifiedbootstate=green`, etc.)
+  - Template with PLACEHOLDER markers for real key insertion
+
+#### Enhanced Property Spoofing
+- **Keystore backend properties** (early boot spoofing):
+  - `ro.hardware.keystore=teetz` (TEE backend)
+  - `ro.hardware.keymint=trusty` (KeyMint HAL)
+  - `ro.hardware.gatekeeper=teetz` (Gatekeeper)
+  - `ro.security.keystore.deserializer_type=tee`
+  - `ro.crypto.state=encrypted` (crypto consistency)
+
+- **New functions in `common_func.sh`**:
+  - `spoof_keybox_properties()` — Spoofs all keystore/keymint properties
+  - `setup_keybox_environment()` — Sets security level for Zygisk hooks
+  - `hide_keystore_traces()` — Removes keystore-related root indicators
+  - `is_attestation_app()` — Detects apps known to use hardware attestation
+  - Enhanced `monitor_target_apps()` applies keybox hiding for attestation apps
+
+#### Enhanced Zygisk Module
+- **Integrated keybox hooks** in `main.cpp`:
+  - `keybox_init()` called during module load
+  - `keybox_hook_process()` applied per target app
+  - `keybox_cleanup()` on system server specialize
+  - Logs keybox activity to Android logcat
+
+### Changed
+- **Version bump**: v0.9.1-beta → v1.0.0 (stable)
+- **module.prop**: Updated description to highlight keybox/attestation features
+- **system.prop**: Added keystore/keymint/crypto properties
+- **post-fs-data.sh**: Added early-boot keybox property spoofing, keybox.xml validation
+- **Android.mk**: Added `keybox_hook.cpp` to native build
+
+### How to Use Keybox Features
+
+1. **Basic setup** (works out of the box):
+   ```bash
+   # Install v1.0.0 module
+   # Keybox TEE spoofing is active by default
+   # Apps requesting attestation get spoofed certificates
+   ```
+
+2. **Insert real keys** (better compatibility):
+   ```bash
+   # Extract keybox from a stock device:
+   adb shell su -c "cat /data/misc/keystore/persistent.sqlite" > keystore.db
+   # Extract keys and replace PLACEHOLDER values in keybox.xml
+   ```
+
+3. **Configure security level**:
+   ```bash
+   # Edit keybox.xml:
+   # <SpoofedSecurityLevel>tee</SpoofedSecurityLevel>
+   # Options: tee, strongbox, software
+   ```
+
+4. **Block attestation entirely** (for stubborn apps):
+   ```bash
+   # Set environment variable:
+   export UBLESTRAMK_BLOCK_ATTESTATION=1
+   ```
+
+### Known Limitations
+- Spoofed certificates pass app-side parsing but may fail Google server-side verification
+- Apps using server-backed integrity checks may still fail (expected behavior)
+- For full bypass, real device attestation keys are recommended
+
+---
+
 ## [v0.9.1-beta] - 2026-06-29
 
 ### Fixed
@@ -80,23 +181,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Future Roadmap
 
-### v1.0.0 (Stable)
-- [x] Community feedback integration
-- [x] Expanded OEM/regional app support
-- [x] Performance optimizations
-- [ ] Improved Zygisk hiding
-- [ ] Auto-detection of hiding requirements
-- [ ] GUI configuration app
-
 ### v1.1.0
-- [ ] Play Integrity API bypass helpers
-- [ ] Automatic target app detection
-- [ ] Additional performance optimizations
+- [ ] Automatic keybox extraction from companion device
+- [ ] Certificate chain matching for popular device models
+- [ ] Additional keystore property spoofing
+- [ ] Performance: Lazy keybox initialization
+
+### v1.2.0
+- [ ] StrongBox emulation layer
+- [ ] Google Play Integrity API server response mocking
+- [ ] Kernel-level hiding for KernelSU
+- [ ] Advanced anti-detection techniques
 
 ### v2.0.0
 - [ ] Standalone mode (no Zygisk required)
-- [ ] Kernel-level hiding for KernelSU
-- [ ] Advanced anti-detection techniques
+- [ ] AI-powered dynamic detection evasion
+- [ ] Auto-configuration based on device model
 
 ---
 
