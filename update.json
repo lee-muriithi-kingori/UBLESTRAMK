@@ -1,6 +1,6 @@
 {
-    "version": "v0.9.1-beta",
-    "versionCode": 901,
-    "zipUrl": "https://github.com/lee-muriithi-kingori/UBLESTRAMK/releases/download/v0.9.1-beta/UBLESTRAMK-v0.9.1-beta.zip",
-    "changelog": "https://github.com/lee-muriithi-kingori/UBLESTRAMK/releases/tag/v0.9.1-beta"
+  "version": "v1.1.0",
+  "versionCode": 1100,
+  "zipUrl": "https://github.com/lee-muriithi-kingori/UBLESTRAMK/releases/download/v1.1.0/UBLESTRAMK-v1.1.0.zip",
+  "changelog": "https://github.com/lee-muriithi-kingori/UBLESTRAMK/raw/main/CHANGELOG.md"
 }

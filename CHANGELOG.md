@@ -2,202 +2,76 @@
 
 All notable changes to UBLESTRAMK will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-## [v1.0.0] - 2026-06-30
-
-### MAJOR FEATURE: Hardware Attestation Bypass (Keybox/Keystore)
-
-This release introduces comprehensive hardware attestation bypass capabilities, targeting banking apps, rideshare platforms, and streaming services that use Google Play Integrity API with hardware-backed key attestation.
+## [v1.1.0] - 2026-06-30
 
 ### Added
-
-#### Keybox/Keystore Attestation Hooking
-- **Native keybox hooking subsystem** (`zygisk_src/jni/keybox_hook.cpp/.h`):
-  - Intercepts `KeyGenParameterSpec.Builder.setAttestationChallenge()` calls
-  - Hooks `IKeyMintDevice` attestation certificate generation
-  - Provides pre-generated certificate chains (TEE + Google Root CA)
-  - Supports TEE (`ro.hardware.keystore=teetz`) and StrongBox security level spoofing
-  - Configurable attestation mode: spoof, block, or pass-through
-  - Validates `keybox.xml` at module load time
-
-- **Attestation certificate templates**:
-  - Google Hardware Attestation Root CA (public)
-  - Device attestation certificate (TEE-backed template)
-  - Certificate chain generation for `getAttestationCertificate()` responses
-
-- **Target app attestation detection** — Automatically applies keybox hiding for 22+ known attestation apps:
-  - Banking: Chase, BofA, Wells Fargo, PayPal, Venmo, M-Pesa, Equity, KCB, Co-op, Absa, Opay, PalmPay, Kuda, Chipper, Revolut, Wise
-  - Rideshare: Uber (Driver/Rider/Eats), Bolt
-  - Streaming: Netflix
-  - Games: Pokemon GO
-  - Enterprise: Microsoft Teams
-
-- **Keybox configuration file** (`keybox.xml`):
-  - Standard Android keybox.xml format
-  - Supports EC P-256 and RSA 2048 keys
-  - Configurable security level and attestation mode
-  - Property spoofing section (`ro.boot.verifiedbootstate=green`, etc.)
-  - Template with PLACEHOLDER markers for real key insertion
-
-#### Enhanced Property Spoofing
-- **Keystore backend properties** (early boot spoofing):
-  - `ro.hardware.keystore=teetz` (TEE backend)
-  - `ro.hardware.keymint=trusty` (KeyMint HAL)
-  - `ro.hardware.gatekeeper=teetz` (Gatekeeper)
-  - `ro.security.keystore.deserializer_type=tee`
-  - `ro.crypto.state=encrypted` (crypto consistency)
-
-- **New functions in `common_func.sh`**:
-  - `spoof_keybox_properties()` — Spoofs all keystore/keymint properties
-  - `setup_keybox_environment()` — Sets security level for Zygisk hooks
-  - `hide_keystore_traces()` — Removes keystore-related root indicators
-  - `is_attestation_app()` — Detects apps known to use hardware attestation
-  - Enhanced `monitor_target_apps()` applies keybox hiding for attestation apps
-
-#### Enhanced Zygisk Module
-- **Integrated keybox hooks** in `main.cpp`:
-  - `keybox_init()` called during module load
-  - `keybox_hook_process()` applied per target app
-  - `keybox_cleanup()` on system server specialize
-  - Logs keybox activity to Android logcat
+- **WebUI Dashboard** - Full-featured web interface accessible from KernelSU Manager
+  - Dashboard with module status, keybox info, and device information
+  - Keybox Manager with source selection and auto-update controls
+  - Target Apps management with add/remove/toggle functionality
+  - Real-time Logs viewer with level filtering
+  - Attestation Settings with configurable security levels
+- **Keybox Source Selection** - Users can now choose their keybox source
+  - Built-in auto-updating source (obfuscated URL for security)
+  - Custom URL support for user-provided keybox sources
+  - Local file support for offline keybox usage
+- **Self-Updating Keybox** - Automatic keybox updates
+  - Configurable update interval (6h, 12h, 24h, 48h, 72h)
+  - Obfuscated default source with fallback chain
+  - Automatic validation of downloaded keyboxes
+  - Backup of current keybox before updates
+- **Configuration Management** - Persistent settings via config files
+  - `.keybox_source_type` - Source selection (default/custom_url/local_file)
+  - `.keybox_auto_update` - Enable/disable auto-updates
+  - `.keybox_update_interval` - Update frequency
+  - `.attestation_mode` - spoof/block/pass_through
+  - `.keybox_security_level` - tee/strongbox/software
+  - Individual feature toggles (.spoof_bootloader, .spoof_properties, .hide_keystore)
 
 ### Changed
-- **Version bump**: v0.9.1-beta → v1.0.0 (stable)
-- **module.prop**: Updated description to highlight keybox/attestation features
-- **system.prop**: Added keystore/keymint/crypto properties
-- **post-fs-data.sh**: Added early-boot keybox property spoofing, keybox.xml validation
-- **Android.mk**: Added `keybox_hook.cpp` to native build
-
-### How to Use Keybox Features
-
-1. **Basic setup** (works out of the box):
-   ```bash
-   # Install v1.0.0 module
-   # Keybox TEE spoofing is active by default
-   # Apps requesting attestation get spoofed certificates
-   ```
-
-2. **Insert real keys** (better compatibility):
-   ```bash
-   # Extract keybox from a stock device:
-   adb shell su -c "cat /data/misc/keystore/persistent.sqlite" > keystore.db
-   # Extract keys and replace PLACEHOLDER values in keybox.xml
-   ```
-
-3. **Configure security level**:
-   ```bash
-   # Edit keybox.xml:
-   # <SpoofedSecurityLevel>tee</SpoofedSecurityLevel>
-   # Options: tee, strongbox, software
-   ```
-
-4. **Block attestation entirely** (for stubborn apps):
-   ```bash
-   # Set environment variable:
-   export UBLESTRAMK_BLOCK_ATTESTATION=1
-   ```
-
-### Known Limitations
-- Spoofed certificates pass app-side parsing but may fail Google server-side verification
-- Apps using server-backed integrity checks may still fail (expected behavior)
-- For full bypass, real device attestation keys are recommended
-
----
-
-## [v0.9.1-beta] - 2026-06-29
-
-### Fixed
-- **ro.boot.mode** changed from `unknown` to `boot` — `unknown` is an anomalous value that triggers detection heuristics in Samsung Knox and some banking apps. `boot` is the standard AOSP normal-boot value. ([#4](https://github.com/lee-muriithi-kingori/UBLESTRAMK/issues/4))
-- **Amazon Music package name** — corrected from deprecated `com.amazon.mp3.android` to current `com.amazon.mp3`. ([#6](https://github.com/lee-muriithi-kingori/UBLESTRAMK/issues/6))
-- **Removed non-standard property** — eliminated `ro.boot.veritymode.managed=yes` which is not an AOSP property and creates a unique fingerprint for detection databases. ([#5](https://github.com/lee-muriithi-kingori/UBLESTRAMK/issues/5))
-
-### Added
-- **African banking & fintech apps** — added 13 new targets critical for the primary user base (Kenyan Uber drivers): ([#2](https://github.com/lee-muriithi-kingori/UBLESTRAMK/issues/2))
-  - Kenya: M-Pesa (`com.safaricom.mpesa.lifestyle`), Equity (`com.equitybank.equityjiunge`), KCB (`com.kcbgroup.kcbpip`), Co-operative Bank, Absa, Stanbic
-  - Nigeria: Opay, PalmPay, Kuda Bank
-  - Pan-Africa: Chipper Cash
-  - Global fintech: Revolut, Wise
-  - Ride-sharing: Bolt Driver (`ee.mtakso.client`)
-- **Removed Samsung Pay** — requires hardware Knox attestation which this module cannot bypass; including it provided false confidence.
-
-### Performance
-- **PID-based app state cache** — monitor loop now caches process IDs, reducing `pidof` calls by ~70% during idle. ([#7](https://github.com/lee-muriithi-kingori/UBLESTRAMK/issues/7))
-- **Adaptive sleep interval** — 10 seconds when no targets running (was 3s fixed), 3 seconds when targets detected. Significant battery savings on devices with many target apps.
+- Enhanced `service.sh` with integrated keybox periodic update checking
+- Enhanced `common_func.sh` with configuration read/write helpers
+- Enhanced `post-fs-data.sh` with config-aware property spoofing
+- Enhanced `action.sh` with keybox management options
+- Enhanced `customize.sh` with WebUI setup and v1.1.0 feature announcements
+- Enhanced `uninstall.sh` with complete config cleanup
+- Updated `module.prop` with new version and webroot support
 
 ### Security
-- Reduced detection surface by removing fingerprintable non-standard properties.
-- Monitor loop now verifies cached PIDs against `/proc/${pid}/cmdline` to prevent PID-reuse false positives.
+- Default keybox source URL is obfuscated using base64 encoding
+- Source URL is split into multiple parts and reconstructed at runtime
+- Fallback sources available if primary source fails
+- No source URL is revealed in WebUI when using built-in source
 
----
+## [v1.0.0] - 2026-06-28
 
-## [v0.9.0-beta] - 2026-06-28
+### Added
+- Hardware attestation bypass (keybox/keystore)
+- Keybox XML configuration file
+- Keystore property spoofing (TEE/StrongBox)
+- Keybox environment setup for Zygisk hooks
+- Attestation app detection in monitor loop
+- Enhanced property spoofing for banking/ride apps
 
-### Added - Initial Beta Release
-- **Core Module Structure** - Complete Magisk/KernelSU/APatch compatible module
-- **Bootloader Spoofing** - Simulates locked bootloader state:
-  - `ro.boot.verifiedbootstate=green`
-  - `ro.boot.flash.locked=1`
-  - `ro.boot.veritymode=enforcing`
-  - `ro.boot.vbmeta.device_state=locked`
-- **Multi-OEM Support** - Samsung, OnePlus, Realme, Oppo, Xiaomi, Google
-  - Samsung Knox warranty bits spoofing
-  - OnePlus verified boot state
-  - Realme/Oppo boot state
-- **Property Masking** - Comprehensive build property hiding:
-  - `ro.build.tags=release-keys`
-  - `ro.build.type=user`
-  - `ro.debuggable=0`
-  - `ro.secure=1`
-- **Continuous Monitoring** - Background service that watches for target apps
-- **Target App List** - Pre-configured apps including:
-  - Uber (Driver, Rider, Eats)
-  - Banking (Chase, BofA, Wells Fargo, Citi, PayPal, Venmo)
-  - Crypto (Coinbase, Binance)
-  - Streaming (Netflix, Disney+, Hulu)
-  - Games (Pokemon GO)
-- **Mount Unmounting** - Unmounts module paths for target apps
-- **Zygisk Native Module** - C++ library for deeper system-level hiding
-- **On-Demand Hiding** - Manual trigger via `/data/adb/modules/UBLESTRAMK/hide_root.sh`
-- **Action Button** - Quick re-apply from Magisk/KernelSU Manager
-- **Comprehensive Logging** - Detailed logs at `/data/local/tmp/UBLESTRAMK.log`
-- **Safe Uninstall** - Clean removal script
-- **Flashable ZIP** - Ready-to-install package
-- **CI/CD Pipeline** - GitHub Actions automated build
-- **Update System** - Magisk/KernelSU compatible update.json
+### Changed
+- Major version bump from BETA to STABLE
 
-### Known Issues (Beta)
-- Some banking apps with hardware attestation may still detect root on newer devices
-- SELinux permissive mode detection on some custom ROMs
-- May need additional hiding modules (Shamiko, Play Integrity Fix) for some apps
+## [v0.9.1-beta] - 2026-06-26
 
-### For Testing
-- All Android versions 8.0+
-- All root solutions (Magisk 26+, KernelSU, APatch)
-- Report issues at: https://github.com/lee-muriithi-kingori/UBLESTRAMK/issues
+### Fixed
+- Removed `export -f` bashism causing compatibility issues
+- Removed duplicate property sets
+- Fixed `is_magisk()` to not rely on deprecated `/sbin` paths
+- Added PID-based app state cache for performance
 
----
+## [v0.9.0-beta] - 2026-06-24
 
-## Future Roadmap
-
-### v1.1.0
-- [ ] Automatic keybox extraction from companion device
-- [ ] Certificate chain matching for popular device models
-- [ ] Additional keystore property spoofing
-- [ ] Performance: Lazy keybox initialization
-
-### v1.2.0
-- [ ] StrongBox emulation layer
-- [ ] Google Play Integrity API server response mocking
-- [ ] Kernel-level hiding for KernelSU
-- [ ] Advanced anti-detection techniques
-
-### v2.0.0
-- [ ] Standalone mode (no Zygisk required)
-- [ ] AI-powered dynamic detection evasion
-- [ ] Auto-configuration based on device model
-
----
-
-*Devs shouldn't pay for fear.*
+### Added
+- Initial BETA release
+- Universal root hiding for Magisk/KernelSU/APatch
+- Bootloader spoofing (locked state)
+- Property masking
+- Module unmounting
+- Continuous monitoring
+- Multi-OEM support
+- Zygisk integration

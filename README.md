@@ -1,13 +1,37 @@
-# UBLESTRAMK [BETA]
+# UBLESTRAMK [STABLE]
 
 > **Universal Boot-Lock Evasion & Stealth Root Admin Module**
 >
 > *Because developers shouldn't pay for fear.*
 
-[![Version](https://img.shields.io/badge/version-v0.9.0--beta-blue.svg)](https://github.com/lee-muriithi-kingori/UBLESTRAMK/releases)
+[![Version](https://img.shields.io/badge/version-v1.1.0-green.svg)](https://github.com/lee-muriithi-kingori/UBLESTRAMK/releases)
 [![Author](https://img.shields.io/badge/author-lee--muriithi--kingori-green.svg)](https://github.com/lee-muriithi-kingori)
 [![License](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/status-BETA-orange.svg)](https://github.com/lee-muriithi-kingori/UBLESTRAMK/issues)
+[![Status](https://img.shields.io/badge/status-STABLE-green.svg)](https://github.com/lee-muriithi-kingori/UBLESTRAMK/issues)
+
+---
+
+## What's New in v1.1.0
+
+### WebUI Dashboard
+Access a comprehensive web interface directly from **KernelSU Manager**:
+- **Dashboard** - View module status, keybox info, and device details
+- **Keybox Manager** - Choose and configure your keybox source
+- **Target Apps** - Manage which apps get root hidden
+- **Logs** - View real-time module logs
+- **Settings** - Configure attestation behavior
+
+### Keybox Source Selection
+You can now choose where your attestation keys come from:
+- **Built-in Source** - Auto-managed, self-updating (default)
+- **Custom URL** - Provide your own keybox.xml URL
+- **Local File** - Use a keybox.xml on your device
+
+### Self-Updating Keybox
+The module automatically fetches the latest keybox configurations:
+- Configurable update intervals
+- Automatic validation of downloaded keyboxes
+- Secure source obfuscation
 
 ---
 
@@ -18,7 +42,7 @@
 **UBLESTRAMK** stands for:
 - **U**niversal - Works across Magisk, KernelSU, and APatch
 - **B**oot-**L**ock **E**vasion - Spoofs a locked bootloader
-- **S**tealth **T**echnology - Hides root traces comprehensively  
+- **S**tealth **T**echnology - Hides root traces comprehensively
 - **R**oot **A**dmin **M**odule - Complete admin control
 - **K**ingori - From the founder, for the community
 
@@ -35,6 +59,25 @@
 - **Multi-OEM Support** - Samsung, OnePlus, Realme, Oppo, Xiaomi, Google, and more
 - **Zygisk Integration** - Deep system-level hiding via Zygisk native libraries
 
+### v1.1.0 - WebUI Dashboard
+- **Full Web Interface** - Access from KernelSU Manager (tap module card)
+- **Keybox Management** - Visual keybox source selection and configuration
+- **Target App Manager** - Add/remove apps with one tap
+- **Log Viewer** - Real-time filtered logs
+- **Settings Panel** - Configure attestation mode, security level, and more
+
+### v1.1.0 - Keybox Source Selection
+- **Built-in Auto-Updating Source** - Automatically fetches latest keys
+- **Custom URL Support** - Use your own trusted keybox source
+- **Local File Support** - Offline keybox support
+- **Source Obfuscation** - Default source URL is protected
+
+### v1.1.0 - Hardware Attestation
+- **Keybox Spoofing** - Spoofs hardware attestation certificate chain
+- **TEE/StrongBox Spoofing** - Reports trusted execution environment
+- **Play Integrity API** - Handles device integrity checks
+- **Keystore Hiding** - Removes keystore injection markers
+
 ### Target Apps (Pre-configured)
 - **Uber** (Driver, Rider, Eats)
 - **Banking** (Chase, BofA, Wells Fargo, Citi, PayPal, Venmo)
@@ -43,12 +86,6 @@
 - **Games** (Pokemon GO, etc.)
 - **Work** (Teams, Slack, Zoom)
 - **Customizable** - Add any app you need
-
-### Advanced Features
-- **On-Demand Hiding** - Manual trigger script for immediate hiding
-- **Action Button** - Quick re-apply from Magisk/KernelSU Manager
-- **Detailed Logging** - Full logs at `/data/local/tmp/UBLESTRAMK.log`
-- **Safe Uninstall** - Clean removal without residue
 
 ---
 
@@ -63,7 +100,7 @@
 ### General Requirements
 - Android 8.0+ (API 26+)
 - Zygisk or ZygiskNext installed
-- Root access (obviously)
+- Root access
 
 ---
 
@@ -93,11 +130,14 @@
 
 #### For KernelSU Users:
 1. Open **KernelSU Manager**
-2. Go to **App Profiles** or **SuperUser**
-3. For each target app, enable **"Unmount modules"** / **"Exclude modifications"**
-4. Install **ZygiskNext** if not already installed
-5. Disable "Enforce DenyList" in ZygiskNext if present
-6. Reboot
+2. Go to **Modules**
+3. Tap on **UBLESTRAMK** card to open the WebUI
+4. Configure your keybox source and target apps
+5. Go to **App Profiles** or **SuperUser**
+6. For each target app, enable **"Unmount modules"** / **"Exclude modifications"**
+7. Install **ZygiskNext** if not already installed
+8. Disable "Enforce DenyList" in ZygiskNext if present
+9. Reboot
 
 #### For APatch Users:
 1. Open **APatch Manager**
@@ -114,9 +154,71 @@ After first boot with UBLESTRAMK:
 
 ---
 
+## WebUI Usage (KernelSU)
+
+The WebUI provides a graphical interface for managing UBLESTRAMK:
+
+### Accessing the WebUI
+1. Open **KernelSU Manager**
+2. Go to the **Modules** tab
+3. Tap on the **UBLESTRAMK** module card
+4. The WebUI will open in a webview
+
+### Dashboard
+View your module status at a glance:
+- Module active/inactive status
+- Root solution detection
+- Bootloader and keystore state
+- Keybox information
+- Device details
+
+### Keybox Manager
+Configure your hardware attestation keys:
+1. **Built-in Source** (Recommended)
+   - Automatically updates with latest keys
+   - Set your preferred update interval
+   - Enable/disable auto-update
+
+2. **Custom URL**
+   - Enter your trusted keybox.xml URL
+   - Module will fetch from your source
+   - Still supports auto-update
+
+3. **Local File**
+   - Place your keybox.xml in the module directory
+   - Module will use it directly
+
+### Target Apps
+Manage which apps get root hidden:
+- View currently configured apps
+- See which apps are currently running
+- Apps using attestation are marked
+- Toggle apps on/off
+- Add new apps by package name
+- Remove apps you don't need
+
+### Logs
+View module activity in real-time:
+- Filter by log level (Info, Warn, Error, Debug)
+- Auto-refreshing log stream
+- Clear logs when needed
+
+### Settings
+Configure attestation behavior:
+- **Attestation Mode**: Spoof / Block / Pass-through
+- **Security Level**: TEE / StrongBox / Software
+- **Spoof Bootloader**: Enable/disable bootloader spoofing
+- **Spoof Properties**: Enable/disable property hiding
+- **Hide Keystore**: Enable/disable keystore trace removal
+
+---
+
 ## Customization
 
-### Adding Target Apps
+### Adding Target Apps (via WebUI)
+The easiest way is through the WebUI Target Apps tab. Just enter the package name and tap Add.
+
+### Adding Target Apps (Manual)
 Edit `/data/adb/modules/UBLESTRAMK/target_apps.txt` and add package names:
 
 ```
@@ -131,6 +233,22 @@ Find package names using:
 adb shell pm list packages | grep appname
 
 # Or use an app like "App Inspector" from Play Store
+```
+
+### Keybox Source (via WebUI)
+Use the Keybox Manager tab to select and configure your keybox source.
+
+### Keybox Source (Manual)
+Edit the configuration files in `/data/adb/modules/UBLESTRAMK/`:
+- `.keybox_source_type` - `default`, `custom_url`, or `local_file`
+- `.keybox_source_url` - Your custom URL (if using custom_url)
+- `.keybox_auto_update` - `1` for enabled, `0` for disabled
+- `.keybox_update_interval` - Hours between checks (default: 24)
+
+### Force Keybox Update
+Run manually:
+```bash
+su -c "sh /data/adb/modules/UBLESTRAMK/keybox_updater.sh --force"
 ```
 
 ### Disabling Log Deletion
@@ -166,15 +284,22 @@ cat /data/local/tmp/UBLESTRAMK.log
 - Detects when target apps are launched
 - Re-applies hiding properties dynamically
 - Watches for property changes by the system
+- Periodically checks for keybox updates (v1.1.0)
 
-### Layer 3: Mount Unmounting
+### Layer 3: Keybox/Attestation Spoofing (v1.1.0)
+- Intercepts hardware attestation requests
+- Returns spoofed certificate chains
+- Reports TEE/StrongBox security level
+- Handles Play Integrity API checks
+
+### Layer 4: Mount Unmounting
 For target apps, module mounts are unmounted:
 - `/data/adb/modules` - Hidden
-- `/data/adb/ksu` - Hidden  
+- `/data/adb/ksu` - Hidden
 - `/debug_ramdisk` - Hidden
 - Module functionality preserved in other apps
 
-### Layer 4: Zygisk Integration (Optional)
+### Layer 5: Zygisk Integration (Optional)
 When Zygisk libraries are present, provides:
 - Deeper system-level hiding
 - PLT hook-based evasion
@@ -185,49 +310,42 @@ When Zygisk libraries are present, provides:
 
 ## Troubleshooting
 
-### App still detects root?
+### WebUI not showing in KernelSU?
+- Make sure you're on KernelSU v0.7.0+
+- The module must be enabled (not disabled)
+- Try force-stopping KernelSU Manager and reopening
 
+### Keybox update failing?
+- Check your internet connection
+- If using custom URL, verify the URL is accessible
+- Check logs: `cat /data/local/tmp/UBLESTRAMK.log | grep Keybox`
+- Try manual update: `sh /data/adb/modules/UBLESTRAMK/keybox_updater.sh --force`
+
+### App still detects root?
 1. **Clear app data completely** - Most important step!
 2. **Check DenyList/Unmount** - Make sure the app is configured
-3. **Reboot** - Some changes need a fresh boot
-4. **Check logs** - `cat /data/local/tmp/UBLESTRAMK.log`
-5. **Try ZygiskNext** - Install if not using it
-6. **Disable other modules** - Some modules conflict
+3. **Check keybox status** - Use WebUI or action button option 3
+4. **Reboot** - Some changes need a fresh boot
+5. **Check logs** - `cat /data/local/tmp/UBLESTRAMK.log`
+6. **Try ZygiskNext** - Install if not using it
+7. **Disable other modules** - Some modules conflict
 
 ### Uber Driver specific issues:
-- Make sure you're on the latest version of the module
+- Make sure keybox has valid keys (not template)
 - Clear Uber Driver data AND Google Play Services data
 - Wait 24-48 hours after first setup (some checks are delayed)
+- Use the WebUI to check keybox status
 
 ### Banking app crashes?
 - Some banking apps use hardware attestation - this cannot be bypassed on all devices
 - Try installing **Play Integrity Fix** module alongside UBLESTRAMK
 - Older devices have better success rates
+- Try different attestation modes in settings
 
 ### Bootloop?
 - Boot into safe mode (volume down during boot)
 - Or use ADB: `adb shell touch /data/adb/modules/UBLESTRAMK/disable`
 - Or remove: `adb shell rm -rf /data/adb/modules/UBLESTRAMK`
-
----
-
-## BETA Status
-
-This is a **BETA release** (v0.9.0-beta). This means:
-- Active development is ongoing
-- Community feedback is essential
-- Some features may not work on all devices
-- Updates will be frequent
-
-**Your testing and bug reports help everyone!** Please report issues at:
-https://github.com/lee-muriithi-kingori/UBLESTRAMK/issues
-
-Include:
-- Device model
-- Android version
-- Root solution and version
-- Target app name
-- Log file contents
 
 ---
 

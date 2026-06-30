@@ -3,15 +3,17 @@
 # UBLESTRAMK - Common Functions
 # Universal Boot-Lock Evasion & Stealth Root Admin Module
 # Author: lee-muriithi-kingori
-# Version: v1.0.0
+# Version: v1.1.0
+#
+# CHANGES (v1.1.0):
+# - Added read_config() to read module configuration files
+# - Added write_config() to write module configuration files
+# - Enhanced keybox functions with source awareness
+# - Added webui configuration helpers
 #
 # CHANGES (v1.0.0):
 # - Added keybox/keystore attestation spoofing functions
-#   spoof_keybox_properties() - Spoofs hardware keystore properties
-#   setup_keybox_environment() - Sets keybox env for Zygisk hooks
-#   hide_keystore_traces() - Removes keystore root indicators
-#   is_attestation_app() - Detects apps that use hardware attestation
-# - Enhanced monitor_target_apps() to apply keybox hiding for attestation apps
+# - Enhanced monitor_target_apps() for keybox attestation
 # - Added keystore backend property spoofing (TEE/StrongBox)
 #
 # CHANGES (v0.9.1-beta):
@@ -38,7 +40,84 @@ log_msg() {
     log -t "UBLESTRAMK" "[$level] $msg" 2>/dev/null
 }
 
+# ==========================================
+# v1.1.0: Configuration Management
+# ==========================================
+
+# Read a configuration value
+read_config() {
+    local key="$1"
+    local default_value="${2:-}"
+    local config_file="$MODPATH/.${key}"
+    
+    if [ -f "$config_file" ]; then
+        cat "$config_file" 2>/dev/null
+    else
+        echo "$default_value"
+    fi
+}
+
+# Write a configuration value
+write_config() {
+    local key="$1"
+    local value="$2"
+    local config_file="$MODPATH/.${key}"
+    
+    echo "$value" > "$config_file"
+    chmod 644 "$config_file" 2>/dev/null
+}
+
+# Get keybox source type
+get_keybox_source_type() {
+    read_config "keybox_source_type" "default"
+}
+
+# Set keybox source type
+set_keybox_source_type() {
+    write_config "keybox_source_type" "$1"
+}
+
+# Get keybox source URL (for custom_url type)
+get_keybox_source_url() {
+    read_config "keybox_source_url" ""
+}
+
+# Set keybox source URL
+set_keybox_source_url() {
+    write_config "keybox_source_url" "$1"
+}
+
+# Get attestation mode
+get_attestation_mode() {
+    read_config "attestation_mode" "spoof"
+}
+
+# Set attestation mode
+set_attestation_mode() {
+    write_config "attestation_mode" "$1"
+}
+
+# Get security level
+get_security_level() {
+    read_config "keybox_security_level" "tee"
+}
+
+# Set security level
+set_security_level() {
+    write_config "keybox_security_level" "$1"
+}
+
+# Check if feature is enabled
+is_feature_enabled() {
+    local feature="$1"
+    local value=$(read_config "$feature" "1")
+    [ "$value" = "1" ]
+}
+
+# ==========================================
 # Property helpers
+# ==========================================
+
 # resetprop_if_diff <prop name> <expected value>
 resetprop_if_diff() {
     local NAME="$1"
@@ -75,6 +154,10 @@ delprop_if_exist() {
     fi
 }
 
+# ==========================================
+# Root solution detection
+# ==========================================
+
 # Check if running on KernelSU
 is_kernelsu() {
     [ -n "${KSU}" ] && [ "${KSU}" = "true" ]
@@ -107,6 +190,10 @@ detect_root_solution() {
 get_version() {
     grep "^version=" "$MODPATH/module.prop" | cut -d'=' -f2
 }
+
+# ==========================================
+# App monitoring
+# ==========================================
 
 # Check if app is running - with PID cache
 is_app_running() {
@@ -141,8 +228,7 @@ is_user_app() {
     [ "$appid" -ge 10000 ] && [ "$appid" -le 19999 ]
 }
 
-# v1.0.0: Check if an app uses hardware attestation
-# These apps call KeyStore.generateKey() with setAttestationChallenge()
+# Check if an app uses hardware attestation
 is_attestation_app() {
     local pkg="$1"
     case "$pkg" in
@@ -162,9 +248,19 @@ is_attestation_app() {
     esac
 }
 
+# ==========================================
+# Bootloader spoofing
+# ==========================================
+
 # Spoof all bootloader-related properties
 spoof_bootloader_locked() {
     log_msg "INFO" "Spoofing locked bootloader state"
+    
+    # Only spoof if enabled in config
+    if ! is_feature_enabled "spoof_bootloader"; then
+        log_msg "INFO" "Bootloader spoofing disabled in settings"
+        return 0
+    fi
     
     resetprop_if_diff ro.boot.flash.locked 1
     resetprop_if_diff ro.boot.verifiedbootstate green
@@ -194,17 +290,40 @@ spoof_bootloader_locked() {
     log_msg "INFO" "Bootloader lock spoofing applied"
 }
 
-# v1.0.0: Spoof keybox/keystore hardware attestation properties
+# ==========================================
+# Keybox/Keystore spoofing
+# ==========================================
+
+# Spoof keybox/keystore hardware attestation properties
 spoof_keybox_properties() {
     log_msg "INFO" "Spoofing keybox/keystore attestation properties"
     
-    # Keystore backend - report TEE (most compatible)
-    resetprop_if_diff ro.hardware.keystore teetz
-    resetprop_if_diff ro.security.keystore.deserializer_type tee
+    # Get configured security level
+    local sec_level=$(get_security_level)
+    local keystore_backend="teetz"
+    local keymint_backend="trusty"
     
-    # KeyMint/Gatekeeper - report trusted execution environment
-    resetprop_if_diff ro.hardware.keymint trusty
-    resetprop_if_diff ro.hardware.gatekeeper teetz
+    case "$sec_level" in
+        strongbox)
+            keystore_backend="strongbox"
+            keymint_backend="strongbox"
+            ;;
+        software)
+            keystore_backend="software"
+            keymint_backend="software"
+            ;;
+        *)
+            # tee is default
+            ;;
+    esac
+    
+    # Keystore backend
+    resetprop_if_diff ro.hardware.keystore "$keystore_backend"
+    resetprop_if_diff ro.security.keystore.deserializer_type "$sec_level"
+    
+    # KeyMint/Gatekeeper backend
+    resetprop_if_diff ro.hardware.keymint "$keymint_backend"
+    resetprop_if_diff ro.hardware.gatekeeper "$keystore_backend"
     resetprop_if_diff ro.hardware.bootctrl default
     
     # Crypto state - encrypted device
@@ -215,30 +334,49 @@ spoof_keybox_properties() {
     delprop_if_exist ro.hardware.keystore.rsa
     delprop_if_exist ro.security.keystore.sw
     
-    log_msg "INFO" "Keybox properties spoofing applied (TEE backend)"
+    log_msg "INFO" "Keybox properties spoofing applied ($sec_level backend)"
 }
 
-# v1.0.0: Set up keybox environment for Zygisk native hooks
+# Set up keybox environment for Zygisk native hooks
 setup_keybox_environment() {
     local security_level="${1:-1}"
     log_msg "INFO" "Setting up keybox environment (security_level=$security_level)"
     
     # Write security level to a file that Zygisk can read
-    echo "$security_level" > "$MODPATH/.keybox_security_level" 2>/dev/null
+    local sec_level=$(get_security_level)
+    local sec_level_num=1
+    case "$sec_level" in
+        strongbox) sec_level_num=2 ;;
+        software) sec_level_num=0 ;;
+        *) sec_level_num=1 ;;
+    esac
+    
+    echo "$sec_level_num" > "$MODPATH/.keybox_security_level" 2>/dev/null
     
     # Set environment variable for child processes
-    export UBLESTRAMK_KEYBOX_SECURITY_LEVEL="$security_level"
+    export UBLESTRAMK_KEYBOX_SECURITY_LEVEL="$sec_level_num"
     
-    # Check for user-provided keybox.xml
+    # Check for user-provided or downloaded keybox.xml
     if [ -f "$MODPATH/keybox.xml" ]; then
         export UBLESTRAMK_KEYBOX_XML="$MODPATH/keybox.xml"
         log_msg "INFO" "Keybox XML configured: $MODPATH/keybox.xml"
+        
+        # Check if it's still a template
+        if grep -q "PLACEHOLDER" "$MODPATH/keybox.xml" 2>/dev/null; then
+            log_msg "WARN" "keybox.xml contains PLACEHOLDER values"
+        fi
     fi
 }
 
-# v1.0.0: Hide keystore-related root indicators
+# Hide keystore-related root indicators
 hide_keystore_traces() {
     log_msg "INFO" "Hiding keystore traces"
+    
+    # Only hide if enabled in config
+    if ! is_feature_enabled "hide_keystore"; then
+        log_msg "INFO" "Keystore hiding disabled in settings"
+        return 0
+    fi
     
     # Delete any magisk/KSU-specific keystore injection markers
     delprop_if_exist ro.magisk.keystore
@@ -249,15 +387,28 @@ hide_keystore_traces() {
     local vb_state="$(resetprop ro.boot.verifiedbootstate 2>/dev/null)"
     if [ "$vb_state" = "green" ] || [ "$vb_state" = "locked" ]; then
         # If bootloader claims locked, keystore must report TEE/StrongBox
-        resetprop_if_diff ro.hardware.keystore teetz
+        local sec_level=$(get_security_level)
+        local keystore_backend="teetz"
+        [ "$sec_level" = "strongbox" ] && keystore_backend="strongbox"
+        resetprop_if_diff ro.hardware.keystore "$keystore_backend"
     fi
     
     log_msg "INFO" "Keystore traces hidden"
 }
 
+# ==========================================
+# Build properties hiding
+# ==========================================
+
 # Hide root-specific build properties
 hide_build_properties() {
     log_msg "INFO" "Hiding build properties"
+    
+    # Only spoof if enabled in config
+    if ! is_feature_enabled "spoof_properties"; then
+        log_msg "INFO" "Property spoofing disabled in settings"
+        return 0
+    fi
     
     for PROP in $(resetprop 2>/dev/null | grep -oE 'ro\..*\.build\.tags' || true); do
         resetprop_if_diff "$PROP" "release-keys"
@@ -286,6 +437,10 @@ hide_build_properties() {
     log_msg "INFO" "Build properties hidden"
 }
 
+# ==========================================
+# Magisk trace hiding
+# ==========================================
+
 # Hide Magisk-specific files and paths
 hide_magisk_traces() {
     log_msg "INFO" "Hiding Magisk traces"
@@ -308,7 +463,11 @@ hide_magisk_traces() {
     fi
 }
 
-# v1.0.0: Enhanced monitor with keybox attestation support
+# ==========================================
+# Target app monitoring
+# ==========================================
+
+# Enhanced monitor with keybox attestation support
 monitor_target_apps() {
     local last_state=""
     local sleep_interval=10
@@ -320,7 +479,7 @@ monitor_target_apps() {
             continue
         fi
         
-        # v1.0.0: Setup keybox environment once after boot
+        # Setup keybox environment once after boot
         if [ "$keybox_setup_done" = false ]; then
             setup_keybox_environment 1
             keybox_setup_done=true
@@ -338,7 +497,7 @@ monitor_target_apps() {
                 current_state="${current_state}${pkg};"
                 found_any=true
                 
-                # v1.0.0: Check if this is an attestation-using app
+                # Check if this is an attestation-using app
                 if is_attestation_app "$pkg"; then
                     found_attestation_app=true
                 fi
@@ -359,7 +518,7 @@ monitor_target_apps() {
                 hide_build_properties
                 hide_magisk_traces
                 
-                # v1.0.0: Apply keybox hiding for attestation apps
+                # Apply keybox hiding for attestation apps
                 if [ "$found_attestation_app" = true ]; then
                     log_msg "INFO" "Attestation app detected - applying keybox spoofing"
                     spoof_keybox_properties
@@ -372,6 +531,10 @@ monitor_target_apps() {
         sleep "$sleep_interval"
     done
 }
+
+# ==========================================
+# Boot utilities
+# ==========================================
 
 # Check if device has boot completed
 is_boot_completed() {
