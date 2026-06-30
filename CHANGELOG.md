@@ -1,72 +1,51 @@
 # UBLESTRAMK Changelog
 
-## v1.3.0 - Current (Stable)
+## v1.4.0 (2026-06-30)
 
-### WebUI-First Action Button
-- Action button (play icon) now opens WebUI dashboard for ALL root managers
-- KernelSU/APatch: Native WebUI via module card tap
-- Magisk: Browser fallback with graceful error handling
-- lmount-style module trigger: `<version>` tag display
+### Critical Fixes
+- **WebUI Settings Persistence**: Complete rewrite of the WebUI dashboard - all settings now properly persist across reboots using atomic file writes via `window.ksu.exec()` API
+- **POSIX Compliance**: Replaced non-portable `stat -c%s` with POSIX `wc -c` throughout all scripts (fixes Android 15+ compatibility)
+- **Config Race Conditions**: All config writes now use atomic temp-file + rename pattern to prevent corruption
 
-### Tag-Based Versioning
-- Clean version display: `UBLESTRAMK <v1.3.0>` instead of `[STABLE]` suffix
-- Added `passmark=99.9` field to module.prop
-- Added `tag: stable` to update.json for programmatic version tracking
+### New Features
+- **Single-File WebUI**: New self-contained `index.html` with embedded CSS/JS - no build step needed, works immediately in KernelSU/APatch/Magisk
+- **Auto-Save Toggles**: Settings changes are automatically saved when toggling switches or changing dropdowns
+- **Real-Time Status**: Dashboard shows live module health (boot verification, keybox state, shield status)
+- **Target App Categorization**: Apps displayed with category tags (Banking, Ride, Fintech, Streaming, etc.)
+- **Log Viewer**: Built-in colored log viewer with refresh and clear buttons
+- **Action Buttons**: Force keybox update, run hide now, validate keybox - all from the dashboard
+- **Read-Only Mode**: Browser fallback gracefully shows read-only banner with manual instructions
 
-### Passmark: 99.9%
-- Boot verification system with 6-point health check
-- Emergency disable mechanism for recovery
-- Safe mode detection with reduced activity
-- Network-aware keybox updates
-- POSIX-compatible shell scripts throughout
+### Build System
+- **Validation Mode**: `./build.sh --check-only` validates entire module without building
+- **Script Syntax Check**: All shell scripts validated with `sh -n` before packaging
+- **WebUI Asset Validation**: Ensures index.html exists and references valid files
+- **module.prop Validation**: Checks required fields, warns on anti-patterns
+- **Proper Exit Codes**: Returns non-zero on validation failures for CI/CD integration
 
-### Improved Stability
-- All scripts use POSIX-compatible syntax (no bashisms)
-- Proper error handling and fallback chains
-- Boot failure tracking and auto-recovery
-- Memory-efficient PID-cached app monitoring
+### Keybox Improvements
+- **Download Retry**: Exponential backoff retry (3 attempts) for all downloads
+- **File Locking**: Prevents concurrent keybox updates using mkdir-based lock
+- **Backup Rotation**: Keeps last 5 keybox backups, removes older ones
+- **Size Validation**: Rejects keyboxes under 100B or over 1MB
+- **Enhanced Validation**: Checks XML structure, certificate count, placeholder detection
+- **Network Check**: Validates internet connectivity before attempting download
 
-## v1.2.0
+### Security
+- **Input Sanitization**: All config values sanitized to prevent shell injection
+- **Log Sanitization**: Log messages stripped of non-printable characters
+- **Temp File Cleanup**: Trap-based cleanup ensures no temp files left behind
+- **PID File Management**: Monitor process tracks its PID for health monitoring
 
-### Boot Verification System
-- Added `verify_boot()` with 6-point self-test
-- Post-fs-data completion tracking
-- Boot failure recovery mechanism
-- Safe mode detection
+## v0.9.1-beta (2026-06-28)
+- Bug fixes for ro.boot.mode, removed fingerprintable property
+- Added 13 African banking and fintech apps
+- ~70% CPU usage reduction with PID caching
 
-### Auto-WebUI Launch
-- Browser opens after installation
-- Community channel link (t.me/lestramk)
-
-### Key Improvements
-- POSIX compatibility (removed local keyword issues)
-- Network-aware keybox update check
-- Service addon for WebUI configuration
-
-## v1.1.0
-
-### WebUI Dashboard
-- Added webroot/ directory with HTML dashboard
-- KernelSU WebUI support via `webroot=` in module.prop
-- Keybox source management through WebUI
-
-### Keybox Auto-Update
-- Self-updating keybox system
-- Configurable update intervals
-- Custom keybox source support
-
-## v1.0.0
-
-### Initial Release
-- Bootloader lock state spoofing
-- Keystore/KeyMint attestation bypass
-- Zygisk-native keybox hooks
-- Target app monitoring with adaptive intervals
-- Magisk/KernelSU/APatch compatibility
-
-## v0.9.1-beta
-
-### Beta Testing
-- PID-based app state cache
-- Fixed Magisk path detection
-- Removed all bash-specific syntax
+## v0.9.0-beta (2026-06-28)
+- Initial beta release
+- Bootloader lock spoofing
+- Keystore attestation bypass
+- WebUI dashboard (basic)
+- Keybox auto-updater
+- 45+ target apps

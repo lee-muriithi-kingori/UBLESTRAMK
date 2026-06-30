@@ -1,13 +1,873 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1976d2">
     <title>UBLESTRAMK Manager</title>
-    <script type="module" crossorigin src="./assets/index-BvV3a8OY.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-DVIpPqk7.css">
-  </head>
-  <body>
-    <div id="root"></div>
-  </body>
+    <style>
+        :root {
+            --bg: #f0f2f5;
+            --surface: #ffffff;
+            --surface2: #f8f9fa;
+            --primary: #1976d2;
+            --primary-light: #e3f2fd;
+            --primary-dark: #1565c0;
+            --text: #1a1a2e;
+            --text2: #6c757d;
+            --border: #e0e0e0;
+            --radius: 14px;
+            --radius-sm: 8px;
+            --shadow: 0 2px 8px rgba(0,0,0,0.08);
+            --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+            --success: #4caf50;
+            --success-bg: #e8f5e9;
+            --warning: #ff9800;
+            --warning-bg: #fff3e0;
+            --error: #f44336;
+            --error-bg: #ffebee;
+            --switch-on: #4caf50;
+            --switch-off: #ccc;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #0d1117;
+                --surface: #161b22;
+                --surface2: #1c2128;
+                --primary: #58a6ff;
+                --primary-light: rgba(88,166,255,0.15);
+                --primary-dark: #79b8ff;
+                --text: #c9d1d9;
+                --text2: #8b949e;
+                --border: #30363d;
+                --shadow: 0 2px 8px rgba(0,0,0,0.3);
+                --shadow-lg: 0 8px 32px rgba(0,0,0,0.4);
+                --success: #3fb950;
+                --success-bg: rgba(63,185,80,0.15);
+                --warning: #d29922;
+                --warning-bg: rgba(210,153,34,0.15);
+                --error: #f85149;
+                --error-bg: rgba(248,81,73,0.15);
+                --switch-on: #3fb950;
+                --switch-off: #484f58;
+            }
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .app { max-width: 720px; margin: 0 auto; padding: 16px; }
+
+        .header {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+        }
+
+        .header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .header-title { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+        .header-title span { color: var(--primary); }
+
+        .version-badge {
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            font-size: 13px;
+            color: var(--text2);
+        }
+
+        .header-meta span { display: flex; align-items: center; gap: 4px; }
+
+        .status-bar {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .status-card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 16px 12px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            transition: transform 0.2s;
+        }
+
+        .status-card:active { transform: scale(0.97); }
+
+        .status-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 8px;
+            font-size: 18px;
+        }
+
+        .status-icon.healthy { background: var(--success-bg); }
+        .status-icon.healthy::after { content: '\2713'; color: var(--success); font-weight: bold; }
+        .status-icon.warning { background: var(--warning-bg); }
+        .status-icon.warning::after { content: '!'; color: var(--warning); font-weight: bold; }
+        .status-icon.error { background: var(--error-bg); }
+        .status-icon.error::after { content: '\2717'; color: var(--error); font-weight: bold; }
+        .status-icon.pending { background: var(--surface2); }
+        .status-icon.pending::after { content: '\25CB'; color: var(--text2); }
+
+        .status-label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+        .status-value { font-size: 14px; font-weight: 700; }
+        .status-value.healthy { color: var(--success); }
+        .status-value.warning { color: var(--warning); }
+        .status-value.error { color: var(--error); }
+
+        .section {
+            background: var(--surface);
+            border-radius: var(--radius);
+            margin-bottom: 16px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .section-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .section-title { font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+
+        .section-count {
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .section-body { padding: 8px 0; }
+
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.15s;
+        }
+
+        .toggle-row:last-child { border-bottom: none; }
+        .toggle-row:active { background: var(--surface2); }
+
+        .toggle-info { flex: 1; min-width: 0; }
+        .toggle-label { font-size: 14px; font-weight: 500; margin-bottom: 2px; }
+        .toggle-desc { font-size: 12px; color: var(--text2); }
+
+        .switch { position: relative; width: 48px; height: 28px; flex-shrink: 0; margin-left: 12px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+            background: var(--switch-off);
+            border-radius: 28px;
+            transition: 0.3s;
+        }
+        .slider::before {
+            content: '';
+            position: absolute;
+            height: 22px;
+            width: 22px;
+            left: 3px;
+            bottom: 3px;
+            background: white;
+            border-radius: 50%;
+            transition: 0.3s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        .switch input:checked + .slider { background: var(--switch-on); }
+        .switch input:checked + .slider::before { transform: translateX(20px); }
+        .switch input:disabled + .slider { opacity: 0.5; cursor: not-allowed; }
+
+        .select-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        .select-row:last-child { border-bottom: none; }
+        .select-label { font-size: 14px; font-weight: 500; }
+        .select-control {
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            color: var(--text);
+            font-size: 14px;
+            min-width: 140px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 12px 20px;
+            border-radius: var(--radius-sm);
+            border: none;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+
+        .btn-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            padding: 16px 20px;
+        }
+        .btn-row.single { grid-template-columns: 1fr; }
+
+        .input-row { padding: 14px 20px; border-bottom: 1px solid var(--border); }
+        .input-label { font-size: 14px; font-weight: 500; margin-bottom: 6px; display: block; }
+        .input-field {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            color: var(--text);
+            font-size: 14px;
+            font-family: inherit;
+        }
+        .input-field:focus { outline: none; border-color: var(--primary); }
+
+        .app-list { max-height: 300px; overflow-y: auto; }
+
+        .app-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+        }
+        .app-item:last-child { border-bottom: none; }
+
+        .app-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-sm);
+            background: var(--primary-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .app-name { flex: 1; font-weight: 500; }
+        .app-pkg { color: var(--text2); font-size: 11px; }
+
+        .app-tag {
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .app-tag.banking { background: var(--error-bg); color: var(--error); }
+        .app-tag.ride { background: var(--primary-light); color: var(--primary); }
+        .app-tag.fintech { background: var(--success-bg); color: var(--success); }
+        .app-tag.streaming { background: var(--warning-bg); color: var(--warning); }
+
+        .log-viewer {
+            background: #0d1117;
+            color: #c9d1d9;
+            padding: 12px 16px;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 11px;
+            line-height: 1.6;
+            max-height: 280px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .log-viewer .log-info { color: #58a6ff; }
+        .log-viewer .log-warn { color: #d29922; }
+        .log-viewer .log-error { color: #f85149; }
+        .log-viewer .log-success { color: #3fb950; }
+
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: var(--surface);
+            color: var(--text);
+            padding: 12px 20px;
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-lg);
+            font-size: 13px;
+            font-weight: 500;
+            animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards;
+            pointer-events: auto;
+            border: 1px solid var(--border);
+        }
+
+        .toast.success { border-left: 4px solid var(--success); }
+        .toast.error { border-left: 4px solid var(--error); }
+        .toast.warn { border-left: 4px solid var(--warning); }
+
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes toastOut {
+            to { opacity: 0; transform: translateY(-20px); }
+        }
+
+        .ro-banner {
+            background: var(--warning-bg);
+            border: 1px solid var(--warning);
+            border-radius: var(--radius-sm);
+            padding: 12px 16px;
+            margin: 16px 20px;
+            font-size: 12px;
+            color: var(--warning);
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .loading-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 24px;
+            color: var(--text2);
+            font-size: 13px;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 12px;
+            color: var(--text2);
+        }
+
+        .footer a { color: var(--primary); text-decoration: none; }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="header">
+            <div class="header-top">
+                <div class="header-title">UBLE<span>STRAMK</span></div>
+                <span class="version-badge" id="versionBadge">v1.4.0</span>
+            </div>
+            <div class="header-meta">
+                <span id="rootSolution">Root: detecting...</span>
+                <span id="passmarkDisplay">Passmark: 99.9%</span>
+                <span id="moduleStatus">Status: checking...</span>
+            </div>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-card">
+                <div class="status-icon" id="bootIcon"></div>
+                <div class="status-label">Boot</div>
+                <div class="status-value" id="bootStatus">Checking</div>
+            </div>
+            <div class="status-card">
+                <div class="status-icon" id="keyboxIcon"></div>
+                <div class="status-label">Keybox</div>
+                <div class="status-value" id="keyboxStatus">Checking</div>
+            </div>
+            <div class="status-card">
+                <div class="status-icon" id="shieldIcon"></div>
+                <div class="status-label">Shield</div>
+                <div class="status-value" id="shieldStatus">Checking</div>
+            </div>
+        </div>
+
+        <div class="ro-banner hidden" id="roBanner">
+            <strong>Read-only mode:</strong> Settings cannot be saved from browser. Use KernelSU/APatch manager for full control, or edit config files directly.
+        </div>
+
+        <div class="section">
+            <div class="section-header">
+                <span class="section-title">Protection Settings</span>
+            </div>
+            <div class="section-body">
+                <div class="toggle-row">
+                    <div class="toggle-info">
+                        <div class="toggle-label">Spoof Bootloader</div>
+                        <div class="toggle-desc">Report locked bootloader to apps</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="spoofBootloader" data-config="spoof_bootloader">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="toggle-row">
+                    <div class="toggle-info">
+                        <div class="toggle-label">Spoof Build Props</div>
+                        <div class="toggle-desc">Hide root-specific build properties</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="spoofProperties" data-config="spoof_properties">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="toggle-row">
+                    <div class="toggle-info">
+                        <div class="toggle-label">Hide Keystore Traces</div>
+                        <div class="toggle-desc">Remove keystore injection markers</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="hideKeystore" data-config="hide_keystore">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">
+                <span class="section-title">Keybox Configuration</span>
+            </div>
+            <div class="section-body">
+                <div class="select-row">
+                    <span class="select-label">Source Type</span>
+                    <select class="select-control" id="keyboxSource" data-config="keybox_source_type">
+                        <option value="default">Built-in Source</option>
+                        <option value="custom_url">Custom URL</option>
+                        <option value="local_file">Local File Only</option>
+                    </select>
+                </div>
+                <div class="input-row" id="customUrlRow">
+                    <label class="input-label">Custom Keybox URL</label>
+                    <input type="text" class="input-field" id="customUrl" data-config="keybox_source_url" placeholder="https://example.com/keybox.xml">
+                </div>
+                <div class="select-row">
+                    <span class="select-label">Security Level</span>
+                    <select class="select-control" id="securityLevel" data-config="keybox_security_level">
+                        <option value="tee">TEE (Trusted Execution)</option>
+                        <option value="strongbox">StrongBox (Hardware)</option>
+                        <option value="software">Software Only</option>
+                    </select>
+                </div>
+                <div class="select-row">
+                    <span class="select-label">Attestation Mode</span>
+                    <select class="select-control" id="attestationMode" data-config="attestation_mode">
+                        <option value="spoof">Spoof Certificates</option>
+                        <option value="block">Block Attestation</option>
+                        <option value="pass_through">Pass Through</option>
+                    </select>
+                </div>
+                <div class="toggle-row">
+                    <div class="toggle-info">
+                        <div class="toggle-label">Auto Update Keybox</div>
+                        <div class="toggle-desc">Automatically fetch updated keyboxes</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="autoUpdate" data-config="keybox_auto_update">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="btn-row single">
+                    <button class="btn btn-primary" id="btnForceUpdate">Force Keybox Update</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">
+                <span class="section-title">Target Apps</span>
+                <span class="section-count" id="appCount">0</span>
+            </div>
+            <div class="section-body">
+                <div class="app-list" id="appList"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">
+                <span class="section-title">Module Logs</span>
+            </div>
+            <div class="section-body">
+                <div class="log-viewer" id="logViewer">Loading logs...</div>
+                <div class="btn-row">
+                    <button class="btn btn-secondary" id="btnRefreshLogs">Refresh</button>
+                    <button class="btn btn-secondary" id="btnClearLogs">Clear</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">
+                <span class="section-title">Actions</span>
+            </div>
+            <div class="section-body">
+                <div class="btn-row">
+                    <button class="btn btn-secondary" id="btnRunHide">Run Hide Now</button>
+                    <button class="btn btn-secondary" id="btnValidateKeybox">Validate Keybox</button>
+                </div>
+                <div class="btn-row single">
+                    <button class="btn btn-primary" id="btnSaveSettings">Save All Settings</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            UBLESTRAMK &mdash; Devs shouldn't pay for fear.<br>
+            <a href="https://t.me/lestramk">@lestramk</a> &middot;
+            <a href="https://github.com/lee-muriithi-kingori/UBLESTRAMK">GitHub</a>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+    const MODULE_ID = 'UBLESTRAMK';
+    const MODULE_PATH = `/data/adb/modules/${MODULE_ID}`;
+    const LOG_FILE = '/data/local/tmp/UBLESTRAMK.log';
+
+    function detectManager() {
+        if (typeof window.ksu !== 'undefined') return 'kernelsu';
+        if (typeof window.apatch !== 'undefined') return 'apatch';
+        return 'browser';
+    }
+
+    const manager = detectManager();
+    const isReadOnly = manager === 'browser';
+
+    function showToast(message, type = 'success') {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.textContent = message;
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    async function exec(cmd) {
+        if (isReadOnly) return { errno: -1, stdout: '', stderr: 'Read-only mode' };
+        try {
+            if (window.ksu) return await window.ksu.exec(cmd);
+            if (window.apatch) return await window.apatch.exec(cmd);
+            return { errno: -1, stdout: '', stderr: 'No exec API' };
+        } catch (e) {
+            return { errno: -1, stdout: '', stderr: e.message };
+        }
+    }
+
+    async function readConfig(key, defaultValue = '') {
+        try {
+            const result = await exec(`cat "${MODULE_PATH}/.${key}" 2>/dev/null`);
+            if (result.errno === 0 && result.stdout) return result.stdout.trim();
+        } catch (e) {}
+        return defaultValue;
+    }
+
+    async function writeConfig(key, value) {
+        const result = await exec(`echo "${value}" > "${MODULE_PATH}/.${key}" && chmod 644 "${MODULE_PATH}/.${key}"`);
+        return result.errno === 0;
+    }
+
+    async function getModuleProp(field) {
+        const result = await exec(`grep "^${field}=" "${MODULE_PATH}/module.prop" 2>/dev/null | cut -d= -f2`);
+        return result.errno === 0 ? result.stdout.trim() : '';
+    }
+
+    async function loadSettings() {
+        const settings = [
+            'spoof_bootloader', 'spoof_properties', 'hide_keystore',
+            'keybox_source_type', 'keybox_source_url', 'keybox_security_level',
+            'attestation_mode', 'keybox_auto_update'
+        ];
+        for (const key of settings) {
+            const value = await readConfig(key);
+            const el = document.querySelector(`[data-config="${key}"]`);
+            if (!el) continue;
+            if (el.type === 'checkbox') {
+                el.checked = value === '1' || value === 'true';
+            } else {
+                el.value = value || el.options[0]?.value || '';
+            }
+        }
+        const sourceType = document.getElementById('keyboxSource').value;
+        document.getElementById('customUrlRow').style.display = sourceType === 'custom_url' ? 'block' : 'none';
+    }
+
+    async function saveAllSettings() {
+        if (isReadOnly) { showToast('Read-only mode', 'warn'); return; }
+        const configs = document.querySelectorAll('[data-config]');
+        let saved = 0, failed = 0;
+        for (const el of configs) {
+            const key = el.dataset.config;
+            const value = el.type === 'checkbox' ? (el.checked ? '1' : '0') : el.value.trim();
+            if (await writeConfig(key, value)) saved++; else failed++;
+        }
+        showToast(failed === 0 ? `All ${saved} settings saved` : `${saved} saved, ${failed} failed`, failed === 0 ? 'success' : 'warn');
+    }
+
+    async function saveSetting(key, value) {
+        if (isReadOnly) return;
+        const success = await writeConfig(key, value);
+        showToast(success ? `${key.replace(/_/g, ' ')} updated` : 'Failed to save', success ? 'success' : 'error');
+    }
+
+    async function updateStatus() {
+        const version = await getModuleProp('version');
+        if (version) document.getElementById('versionBadge').textContent = version;
+
+        let rootSol = 'unknown';
+        if (!isReadOnly) {
+            const result = await exec('echo $KSU $APATCH $MAGISK_VER');
+            const out = result.stdout || '';
+            if (out.includes('true')) rootSol = 'KernelSU';
+            else if (out.includes('APATCH')) rootSol = 'APatch';
+            else if (out.includes('MAGISK')) rootSol = 'Magisk';
+        } else { rootSol = 'Magisk (browser)'; }
+        document.getElementById('rootSolution').textContent = `Root: ${rootSol}`;
+
+        const bootVerified = await readConfig('boot_verified', '0');
+        const pfsDone = await readConfig('post_fs_data_done', '0');
+
+        const bootIcon = document.getElementById('bootIcon');
+        const bootStatus = document.getElementById('bootStatus');
+        const shieldIcon = document.getElementById('shieldIcon');
+        const shieldStatus = document.getElementById('shieldStatus');
+        const moduleStatus = document.getElementById('moduleStatus');
+
+        if (bootVerified === '1' && pfsDone === '1') {
+            bootIcon.className = 'status-icon healthy'; bootStatus.textContent = 'Verified'; bootStatus.className = 'status-value healthy';
+            shieldIcon.className = 'status-icon healthy'; shieldStatus.textContent = 'Active'; shieldStatus.className = 'status-value healthy';
+            moduleStatus.textContent = 'Status: healthy';
+        } else if (pfsDone === '1') {
+            bootIcon.className = 'status-icon warning'; bootStatus.textContent = 'Partial'; bootStatus.className = 'status-value warning';
+            shieldIcon.className = 'status-icon warning'; shieldStatus.textContent = 'Booting'; shieldStatus.className = 'status-value warning';
+            moduleStatus.textContent = 'Status: partial';
+        } else {
+            bootIcon.className = 'status-icon error'; bootStatus.textContent = 'Pending'; bootStatus.className = 'status-value error';
+            shieldIcon.className = 'status-icon pending'; shieldStatus.textContent = 'Waiting'; shieldStatus.className = 'status-value';
+            moduleStatus.textContent = 'Status: initializing';
+        }
+
+        const keyboxIcon = document.getElementById('keyboxIcon');
+        const keyboxStatus = document.getElementById('keyboxStatus');
+
+        if (isReadOnly) {
+            try {
+                const response = await fetch(`${MODULE_PATH}/keybox.xml`);
+                if (response.ok) {
+                    const text = await response.text();
+                    if (text.includes('PLACEHOLDER')) {
+                        keyboxIcon.className = 'status-icon warning'; keyboxStatus.textContent = 'Template'; keyboxStatus.className = 'status-value warning';
+                    } else {
+                        keyboxIcon.className = 'status-icon healthy'; keyboxStatus.textContent = 'Active'; keyboxStatus.className = 'status-value healthy';
+                    }
+                } else {
+                    keyboxIcon.className = 'status-icon error'; keyboxStatus.textContent = 'Missing'; keyboxStatus.className = 'status-value error';
+                }
+            } catch (e) {
+                keyboxIcon.className = 'status-icon pending'; keyboxStatus.textContent = 'Unknown'; keyboxStatus.className = 'status-value';
+            }
+        } else {
+            const kbResult = await exec(`[ -f "${MODULE_PATH}/keybox.xml" ] && echo "exists" || echo "missing"`);
+            if (kbResult.stdout?.trim() === 'exists') {
+                const phResult = await exec(`grep -c "PLACEHOLDER" "${MODULE_PATH}/keybox.xml" 2>/dev/null || echo 0`);
+                const hasPlaceholder = parseInt(phResult.stdout) > 0;
+                if (hasPlaceholder) {
+                    keyboxIcon.className = 'status-icon warning'; keyboxStatus.textContent = 'Template'; keyboxStatus.className = 'status-value warning';
+                } else {
+                    keyboxIcon.className = 'status-icon healthy'; keyboxStatus.textContent = 'Active'; keyboxStatus.className = 'status-value healthy';
+                }
+            } else {
+                keyboxIcon.className = 'status-icon error'; keyboxStatus.textContent = 'Missing'; keyboxStatus.className = 'status-value error';
+            }
+        }
+    }
+
+    async function loadTargetApps() {
+        if (isReadOnly) {
+            try {
+                const response = await fetch(`${MODULE_PATH}/target_apps.txt`);
+                if (response.ok) { parseAndDisplayApps(await response.text()); return; }
+            } catch (e) {}
+            document.getElementById('appList').innerHTML = '<div class="app-item"><div class="app-name">No data available</div></div>';
+            return;
+        }
+        const result = await exec(`cat "${MODULE_PATH}/target_apps.txt" 2>/dev/null`);
+        if (result.errno === 0 && result.stdout) { parseAndDisplayApps(result.stdout); }
+        else { document.getElementById('appList').innerHTML = '<div class="app-item"><div class="app-name">No target apps configured</div></div>'; }
+    }
+
+    function parseAndDisplayApps(text) {
+        const lines = text.split('\n').filter(l => l.trim() && !l.trim().startsWith('#'));
+        const appList = document.getElementById('appList');
+        const appCount = document.getElementById('appCount');
+        const categories = {
+            ride: ['uber', 'bolt', 'mtakso'], banking: ['bank', 'chase', 'paypal', 'venmo', 'mpesa', 'equity', 'kcb', 'coop', 'absa', 'stanbic', 'opay', 'palmpay', 'kuda', 'chipper', 'revolut', 'wise'],
+            fintech: ['coinbase', 'binance', 'crypto', 'wallet'], streaming: ['netflix', 'disney', 'hulu', 'spotify'],
+            government: ['gsi', 'gemalto'], games: ['pokemon', 'supercell'], work: ['teams', 'slack', 'zoom']
+        };
+        function getCategory(pkg) { const p = pkg.toLowerCase(); for (const [cat, keywords] of Object.entries(categories)) { if (keywords.some(k => p.includes(k))) return cat; } return 'other'; }
+        function getIcon(pkg) { const icons = { ride: '\u{1F695}', banking: '\u{1F3E6}', fintech: '\u{1F4B0}', streaming: '\u{1F3AC}', government: '\u{1F6E1}', games: '\u{1F3AE}', work: '\u{1F4BC}', other: '\u{1F4F1}' }; return icons[getCategory(pkg)] || icons.other; }
+
+        appCount.textContent = lines.length;
+        appList.innerHTML = lines.map(pkg => {
+            const cat = getCategory(pkg);
+            return `<div class="app-item"><div class="app-icon">${getIcon(pkg)}</div><div style="flex:1;min-width:0"><div class="app-name">${pkg.split('.').pop()}</div><div class="app-pkg">${pkg}</div></div><span class="app-tag ${cat}">${cat.charAt(0).toUpperCase() + cat.slice(1)}</span></div>`;
+        }).join('');
+    }
+
+    async function loadLogs() {
+        const logViewer = document.getElementById('logViewer');
+        if (isReadOnly) { logViewer.textContent = 'Logs only available in native WebUI.\n\nUse: adb shell "cat /data/local/tmp/UBLESTRAMK.log | tail -50"'; return; }
+        const result = await exec(`tail -50 "${LOG_FILE}" 2>/dev/null || echo "No logs yet"`);
+        logViewer.innerHTML = (result.stdout || 'No logs').split('\n').map(line => {
+            let cls = '';
+            if (line.includes('[INFO]') || line.includes('SUCCESS')) cls = 'log-success';
+            else if (line.includes('[WARN]')) cls = 'log-warn';
+            else if (line.includes('[ERROR]') || line.includes('FAIL')) cls = 'log-error';
+            else if (line.includes('===')) cls = 'log-info';
+            return `<div class="${cls}">${line.replace(/</g, '&lt;')}</div>`;
+        }).join('');
+        logViewer.scrollTop = logViewer.scrollHeight;
+    }
+
+    async function clearLogs() {
+        const result = await exec(`> "${LOG_FILE}"`);
+        showToast(result.errno === 0 ? 'Logs cleared' : 'Failed', result.errno === 0 ? 'success' : 'error');
+        loadLogs();
+    }
+
+    async function forceKeyboxUpdate() {
+        if (isReadOnly) { showToast('Not available in browser', 'warn'); return; }
+        showToast('Starting update...', 'warn');
+        const result = await exec(`sh "${MODULE_PATH}/keybox_updater.sh" --force`);
+        showToast(result.errno === 0 ? 'Update initiated' : 'Update may have failed', result.errno === 0 ? 'success' : 'warn');
+        setTimeout(updateStatus, 3000);
+    }
+
+    async function runHideNow() {
+        if (isReadOnly) { showToast('Not available in browser', 'warn'); return; }
+        const result = await exec(`sh "${MODULE_PATH}/hide_root.sh"`);
+        showToast(result.errno === 0 ? 'Root hiding applied' : 'Failed', result.errno === 0 ? 'success' : 'error');
+        loadLogs();
+    }
+
+    async function validateKeybox() {
+        if (isReadOnly) { showToast('Not available in browser', 'warn'); return; }
+        const result = await exec(`sh "${MODULE_PATH}/keybox_updater.sh" --validate`);
+        showToast(`Keybox: ${result.stdout?.trim() || 'Unknown'}`, result.stdout?.trim() === 'Valid' ? 'success' : 'warn');
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        if (isReadOnly) document.getElementById('roBanner').classList.remove('hidden');
+        await loadSettings();
+        await updateStatus();
+        await loadTargetApps();
+        await loadLogs();
+
+        document.querySelectorAll('input[type="checkbox"][data-config]').forEach(el => {
+            el.addEventListener('change', () => saveSetting(el.dataset.config, el.checked ? '1' : '0'));
+        });
+
+        document.querySelectorAll('select[data-config]').forEach(el => {
+            el.addEventListener('change', () => {
+                saveSetting(el.dataset.config, el.value);
+                if (el.dataset.config === 'keybox_source_type') {
+                    document.getElementById('customUrlRow').style.display = el.value === 'custom_url' ? 'block' : 'none';
+                }
+            });
+        });
+
+        let urlTimeout;
+        document.getElementById('customUrl').addEventListener('input', function() {
+            clearTimeout(urlTimeout);
+            urlTimeout = setTimeout(() => saveSetting('keybox_source_url', this.value), 1000);
+        });
+
+        document.getElementById('btnSaveSettings').addEventListener('click', saveAllSettings);
+        document.getElementById('btnForceUpdate').addEventListener('click', forceKeyboxUpdate);
+        document.getElementById('btnRefreshLogs').addEventListener('click', loadLogs);
+        document.getElementById('btnClearLogs').addEventListener('click', clearLogs);
+        document.getElementById('btnRunHide').addEventListener('click', runHideNow);
+        document.getElementById('btnValidateKeybox').addEventListener('click', validateKeybox);
+
+        setInterval(updateStatus, 30000);
+    });
+    </script>
+</body>
 </html>

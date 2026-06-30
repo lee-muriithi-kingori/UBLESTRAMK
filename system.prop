@@ -1,16 +1,5 @@
-# ==========================================
-# UBLESTRAMK - System Properties
-# These props are loaded as system properties
-#
-# CHANGES (v1.0.0):
-# - Added keybox/keystore attestation-related properties
-#   These properties influence how apps perceive the device's
-#   hardware attestation capability (TEE/StrongBox)
-# - Added ro.hardware.keystore to spoof keystore backend
-# - Added ro.crypto.state for encryption state consistency
-# ==========================================
-
-# Build properties - stock device appearance
+# UBLESTRAMK System Properties v1.4.0
+# Build properties
 ro.build.tags=release-keys
 ro.build.type=user
 ro.secure=1
@@ -18,13 +7,13 @@ ro.adb.secure=1
 ro.debuggable=0
 ro.force.debuggable=0
 
-# Bootloader - locked state
+# Bootloader locked state
 ro.boot.flash.locked=1
 ro.boot.verifiedbootstate=green
 ro.boot.veritymode=enforcing
 ro.boot.vbmeta.device_state=locked
 
-# Samsung Knox - not triggered
+# Samsung Knox
 ro.boot.warranty_bit=0
 ro.warranty_bit=0
 
@@ -35,25 +24,23 @@ ro.secureboot.devicelock=1
 # OEM unlock disabled
 sys.oem_unlock_allowed=0
 
-# Recovery mode prevention
+# Recovery mode prevention (CRITICAL)
 ro.boot.mode=boot
+ro.bootmode=boot
+vendor.boot.mode=boot
 
-# Keystore backend spoofing (v1.0.0)
-# Report TEE-backed keystore (most compatible)
+# Keystore backend
 ro.hardware.keystore=teetz
 ro.security.keystore.deserializer_type=tee
 
-# Crypto state - consistent with locked bootloader
+# Crypto state
 ro.crypto.state=encrypted
 ro.crypto.type=file
 
-# Additional keymint properties for attestation consistency
+# KeyMint/Gatekeeper
 ro.hardware.keymint=trusty
 ro.hardware.gatekeeper=teetz
 ro.hardware.bootctrl=default
 
-# Disable developer indicators
+# Developer indicators
 persist.sys.adb.notify=0
-
-# SafetyNet/Play Integrity consistency
-ro.build.selinux=0
