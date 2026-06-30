@@ -3,7 +3,7 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE    := ublestramk
-LOCAL_SRC_FILES := main.cpp
+LOCAL_SRC_FILES := main.cpp keybox_hook.cpp
 LOCAL_CFLAGS    := -O2 -fvisibility=hidden -fvisibility-inlines-hidden \
                    -fno-exceptions -fno-rtti -fno-stack-protector \
                    -DANDROID -DNDEBUG
