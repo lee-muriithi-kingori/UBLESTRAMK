@@ -3,7 +3,15 @@
  * Provides deep system-level root hiding via Zygisk
  * 
  * Author: lee-muriithi-kingori
- * Version: v0.9.0-beta
+ * Version: v1.0.0
+ * 
+ * CHANGES (v1.0.0):
+ * - Added Keybox/Keystore attestation hook integration
+ *   Intercepts hardware attestation for banking/rideshare apps
+ *   Provides spoofed attestation certificates via keybox_hook.cpp
+ *   Supports TEE and StrongBox security level spoofing
+ * - Enhanced target app detection with attestation-aware apps
+ * - Added companion process keybox initialization
  */
 
 #include <unistd.h>
@@ -22,6 +30,7 @@
 #include <ctype.h>
 
 #include "zygisk.hpp"
+#include "keybox_hook.h"
 
 #define LOG_TAG "UBLESTRAMK-Zygisk"
 #define LOGD(...) fprintf(stderr, "[" LOG_TAG "] DEBUG: " __VA_ARGS__); fprintf(stderr, "\n")
@@ -34,6 +43,7 @@ static const char* TARGET_PACKAGES[] = {
     "com.ubercab.driver",
     "com.ubercab",
     "com.ubercab.eats",
+    "ee.mtakso.client",
     "com.chase.sig.android",
     "com.bankofamerica.cashpromobile",
     "com.wf.wellsfargomobile",
@@ -41,8 +51,21 @@ static const char* TARGET_PACKAGES[] = {
     "com.venmo",
     "com.coinbase.android",
     "com.binance.dev",
+    "com.safaricom.mpesa.lifestyle",
+    "com.equitybank.equityjiunge",
+    "com.kcbgroup.kcbpip",
+    "co.ke.coopbank",
+    "za.co.absa.africa.android",
+    "com.opay.ng",
+    "com.transsnet.palmpay",
+    "com.kudabank.app",
+    "com.chippercash",
+    "com.revolut.revolut",
+    "com.transferwise.android",
     "com.netflix.mediaclient",
     "com.nianticlabs.pokemongo",
+    "com.microsoft.teams",
+    "com.amazon.mp3",
     nullptr
 };
 
@@ -75,6 +98,14 @@ public:
         this->m_api = api;
         this->m_env = env;
         LOGI("Module loaded in Zygote");
+        
+        // Initialize keybox hook subsystem
+        int kb_result = keybox_init(env);
+        if (kb_result == KEYBOX_RESULT_OK) {
+            LOGI("Keybox hook subsystem initialized");
+        } else {
+            LOGW("Keybox hook initialization failed: %d", kb_result);
+        }
     }
 
     void preAppSpecialize(zygisk::AppSpecializeArgs *args) override {
@@ -117,6 +148,14 @@ public:
         // Target apps get extra treatment
         if (isTarget) {
             LOGI("Target app detected: %s - applying deep hiding", pkgName);
+            
+            // Initialize keybox hooks for attestation apps
+            if (pkgName) {
+                int kb_result = keybox_hook_process(m_env, pkgName, args->uid);
+                if (kb_result == KEYBOX_RESULT_OK) {
+                    LOGI("Keybox hooks applied for %s", pkgName);
+                }
+            }
         }
 
         // Set DLCLOSE option to unload after this function
@@ -140,11 +179,14 @@ public:
     }
 
     void postAppSpecialize(const zygisk::AppSpecializeArgs *args) override {
+        (void)args;
         // Nothing to do post-specialize
     }
 
     void preServerSpecialize(zygisk::ServerSpecializeArgs *args) override {
+        (void)args;
         // System server - unload module to save resources
+        keybox_cleanup(m_env);
         m_api->setOption(zygisk::Option::DLCLOSE_MODULE_LIBRARY);
     }
 
@@ -295,7 +337,6 @@ private:
         const char* path = getenv("PATH");
         if (path && (strstr(path, "/sbin") != nullptr ||
                      strstr(path, ".magisk") != nullptr)) {
-            // PATH will be sanitized by Android later
             LOGD("Cleaning PATH environment");
         }
     }
