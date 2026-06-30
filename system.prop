@@ -2,11 +2,12 @@
 # UBLESTRAMK - System Properties
 # These props are loaded as system properties
 #
-# CHANGES (v0.9.1-beta):
-# - Fixed ro.boot.mode from 'unknown' to 'boot'
-#   'unknown' is an anomalous value that triggers detection
-#   heuristics. 'boot' is the standard normal-boot value.
-#   (fixes issue #4)
+# CHANGES (v1.0.0):
+# - Added keybox/keystore attestation-related properties
+#   These properties influence how apps perceive the device's
+#   hardware attestation capability (TEE/StrongBox)
+# - Added ro.hardware.keystore to spoof keystore backend
+# - Added ro.crypto.state for encryption state consistency
 # ==========================================
 
 # Build properties - stock device appearance
@@ -34,8 +35,25 @@ ro.secureboot.devicelock=1
 # OEM unlock disabled
 sys.oem_unlock_allowed=0
 
-# Recovery mode prevention - set to standard boot value
-# NOTE: post-fs-data.sh uses resetprop_if_match to change this
-# only when it currently contains "recovery", which is safer.
-# This default value ensures a normal boot state is presented.
+# Recovery mode prevention
 ro.boot.mode=boot
+
+# Keystore backend spoofing (v1.0.0)
+# Report TEE-backed keystore (most compatible)
+ro.hardware.keystore=teetz
+ro.security.keystore.deserializer_type=tee
+
+# Crypto state - consistent with locked bootloader
+ro.crypto.state=encrypted
+ro.crypto.type=file
+
+# Additional keymint properties for attestation consistency
+ro.hardware.keymint=trusty
+ro.hardware.gatekeeper=teetz
+ro.hardware.bootctrl=default
+
+# Disable developer indicators
+persist.sys.adb.notify=0
+
+# SafetyNet/Play Integrity consistency
+ro.build.selinux=0
