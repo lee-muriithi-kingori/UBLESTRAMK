@@ -1,10 +1,10 @@
 #!/system/bin/sh
-# UBLESTRAMK Action Script v1.4.0
+# UBLESTRAMK Action Script v1.4.1
 MODPATH="${0%/*}"
 . "$MODPATH/common_func.sh"
 
 echo "================================"
-echo "  UBLESTRAMK <v1.4.0>"
+echo "  UBLESTRAMK <v1.4.1>"
 echo "  Passmark: 99.9%"
 echo "  Root: $(detect_root_solution)"
 echo "================================"

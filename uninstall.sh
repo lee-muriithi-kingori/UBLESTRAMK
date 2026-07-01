@@ -12,9 +12,9 @@ MODPATH="${0%/*}"
 LOG_FILE="/data/local/tmp/UBLESTRAMK.log"
 
 log_msg() {
-    local level="$1"
-    local msg="$2"
-    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    level="$1"
+    msg="$2"
+    timestamp=$(date '+%Y-%m-%d %H:%M:%S')
     echo "[$timestamp] [$level] UBLESTRAMK: $msg" >> "$LOG_FILE" 2>/dev/null
 }
 
@@ -30,10 +30,19 @@ for config_file in \
     "$MODPATH/.keybox_check_counter" \
     "$MODPATH/.keybox_ready" \
     "$MODPATH/.keybox_security_level" \
+    "$MODPATH/.keybox_security_level_num" \
     "$MODPATH/.attestation_mode" \
     "$MODPATH/.spoof_bootloader" \
     "$MODPATH/.spoof_properties" \
-    "$MODPATH/.hide_keystore"; do
+    "$MODPATH/.hide_keystore" \
+    "$MODPATH/.post_fs_data_done" \
+    "$MODPATH/.boot_verified" \
+    "$MODPATH/.boot_failed" \
+    "$MODPATH/.post_fs_data_start" \
+    "$MODPATH/.monitor_pid" \
+    "$MODPATH/.install_complete" \
+    "$MODPATH/.safe_mode_detected" \
+    "$MODPATH/.recovery_mode_detected"; do
     if [ -f "$config_file" ]; then
         rm -f "$config_file"
     fi

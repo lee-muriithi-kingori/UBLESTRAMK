@@ -1,4 +1,4 @@
-# UBLESTRAMK System Properties v1.4.0
+# UBLESTRAMK System Properties v1.4.1
 # Build properties
 ro.build.tags=release-keys
 ro.build.type=user

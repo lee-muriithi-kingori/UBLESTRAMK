@@ -1,44 +1,35 @@
 # UBLESTRAMK Changelog
 
-## v1.4.0 (2026-06-30)
+## v1.4.1 (2026-07-01)
 
-### Critical Fixes
-- **WebUI Settings Persistence**: Complete rewrite of the WebUI dashboard - all settings now properly persist across reboots using atomic file writes via `window.ksu.exec()` API
-- **POSIX Compliance**: Replaced non-portable `stat -c%s` with POSIX `wc -c` throughout all scripts (fixes Android 15+ compatibility)
-- **Config Race Conditions**: All config writes now use atomic temp-file + rename pattern to prevent corruption
+### Bug Fixes
+
+- **Keystore trace hiding at boot**: `hide_keystore_traces()` now runs during `post-fs-data` stage (before Zygote starts), not only in the monitor loop. Many banking/fintech apps check for Magisk/KSU keystore injection properties during their **very early initialization** — before the monitor loop ever runs.
+- **Monitor loop config reload**: The service monitor now calls `reload_configs()` each cycle and reads actual config values from disk on every iteration, instead of using hardcoded defaults set at startup. WebUI toggle changes now take effect within seconds without restarting the service.
+- **Keystore hiding on manual run**: `hide_root.sh` now also calls `hide_keystore_traces()` when invoked manually.
+- **`local` keyword POSIX shim removal**: Removed the broken POSIX compatibility shim from `common_func.sh` (`local() { :; }` fallback defined after the detection check, making it ineffective). All scripts now use plain variable assignment compatible with both bash and POSIX sh.
 
 ### New Features
-- **Single-File WebUI**: New self-contained `index.html` with embedded CSS/JS - no build step needed, works immediately in KernelSU/APatch/Magisk
-- **Auto-Save Toggles**: Settings changes are automatically saved when toggling switches or changing dropdowns
-- **Real-Time Status**: Dashboard shows live module health (boot verification, keybox state, shield status)
-- **Target App Categorization**: Apps displayed with category tags (Banking, Ride, Fintech, Streaming, etc.)
-- **Log Viewer**: Built-in colored log viewer with refresh and clear buttons
-- **Action Buttons**: Force keybox update, run hide now, validate keybox - all from the dashboard
-- **Read-Only Mode**: Browser fallback gracefully shows read-only banner with manual instructions
 
-### Build System
-- **Validation Mode**: `./build.sh --check-only` validates entire module without building
-- **Script Syntax Check**: All shell scripts validated with `sh -n` before packaging
-- **WebUI Asset Validation**: Ensures index.html exists and references valid files
-- **module.prop Validation**: Checks required fields, warns on anti-patterns
-- **Proper Exit Codes**: Returns non-zero on validation failures for CI/CD integration
+- **Native Zygisk C++ layer**: Added real `zygisk_src/jni/root_spoof.cpp`, `Android.mk`, and `Application.mk`. The C++ module provides process-info hiding hooks that shell scripts alone cannot achieve — strips Magisk/KSU markers from `/proc/self/status` and mount info reads, and provides spoofed Build properties via native code. Requires Android NDK to build (`./build.sh` detects it automatically).
 
-### Keybox Improvements
-- **Download Retry**: Exponential backoff retry (3 attempts) for all downloads
-- **File Locking**: Prevents concurrent keybox updates using mkdir-based lock
-- **Backup Rotation**: Keeps last 5 keybox backups, removes older ones
-- **Size Validation**: Rejects keyboxes under 100B or over 1MB
-- **Enhanced Validation**: Checks XML structure, certificate count, placeholder detection
-- **Network Check**: Validates internet connectivity before attempting download
+### Chores
 
-### Security
-- **Input Sanitization**: All config values sanitized to prevent shell injection
-- **Log Sanitization**: Log messages stripped of non-printable characters
-- **Temp File Cleanup**: Trap-based cleanup ensures no temp files left behind
-- **PID File Management**: Monitor process tracks its PID for health monitoring
+- Updated `build.sh` with Zygisk source validation and better native-build messaging
+- Updated `META-INF/update-binary` (was previously absent from repo)
+- Version bumped: v1.4.0 → v1.4.1, versionCode: 1400 → 1401
+
+## v1.4.0 (2026-06-30)
+
+- WebUI Settings Persistence (atomic file writes)
+- POSIX Compliance (POSIX `wc -c` throughout)
+- Single-File WebUI with embedded CSS/JS
+- Real-Time Status (boot verification, keybox state, shield status)
+- Enhanced Keybox Updater (retry logic, file locking, backup rotation)
+- Build Validation (`./build.sh --check-only`)
 
 ## v0.9.1-beta (2026-06-28)
-- Bug fixes for ro.boot.mode, removed fingerprintable property
+- Bug fixes for `ro.boot.mode`, removed fingerprintable property
 - Added 13 African banking and fintech apps
 - ~70% CPU usage reduction with PID caching
 

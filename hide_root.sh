@@ -1,12 +1,17 @@
 #!/system/bin/sh
-# UBLESTRAMK On-Demand Root Hiding v1.4.0
+# UBLESTRAMK On-Demand Root Hiding v1.4.1
 MODPATH="${0%/*}"
 . "$MODPATH/common_func.sh"
 
-log_msg "INFO" "=== Manual root hiding ==="
+log_msg "INFO" "=== Manual root hiding v1.4.1 ==="
+
 spoof_bootloader_locked
 hide_build_properties
 hide_magisk_traces
+# FIX: also hide keystore traces on manual run
+if is_feature_enabled "hide_keystore"; then
+    hide_keystore_traces
+fi
 
 resetprop_if_diff ro.boot.mode boot
 resetprop_if_diff ro.bootmode boot

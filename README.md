@@ -1,4 +1,4 @@
-# UBLESTRAMK <v1.4.0>
+# UBLESTRAMK <v1.4.1>
 
 **Universal Boot-Lock Evasion & Stealth Root Admin Module**
 
@@ -6,14 +6,13 @@
 
 Hide root from Uber Driver, banking apps, streaming services, and more. For Magisk 24+, KernelSU, and APatch.
 
-## What's New in v1.4.0
+## What's New in v1.4.1
 
-- **Full WebUI Settings Persistence** - Settings now survive reboots and are stored atomically
-- **POSIX Compliance** - Works on Android 15+ with strict POSIX shells
-- **Single-File WebUI** - Self-contained dashboard, no build step needed
-- **Real-Time Status** - Live boot verification, keybox state, and shield status
-- **Enhanced Keybox Updater** - Retry logic, file locking, backup rotation
-- **Build Validation** - `./build.sh --check-only` validates everything
+- **Native Zygisk C++ Layer**: Real `root_spoof.cpp` with process-info hiding hooks — strips Magisk/KSU markers from `/proc/self/status` and `/proc/self/mounts`
+- **Keystore Hiding at Boot**: `hide_keystore_traces()` now runs during `post-fs-data` stage (before Zygote), not just in the monitor loop — apps that check traces early are now covered
+- **Monitor Loop Config Reload**: Monitor now calls `reload_configs()` each cycle and reads actual config from disk instead of hardcoded defaults — WebUI toggle changes take effect immediately
+- **Keystore Hiding on Manual Run**: `hide_root.sh` now also calls `hide_keystore_traces()` on manual invocation
+- **Proper `local` Removal**: Removed the broken POSIX shim (`local() { :; }` detection pattern) — all scripts now use plain variable assignment compatible with both bash and POSIX sh
 
 ## Features
 
@@ -21,6 +20,7 @@ Hide root from Uber Driver, banking apps, streaming services, and more. For Magi
 |---------|-------------|
 | Boot Lock Spoofing | Reports locked bootloader to apps |
 | Keystore Attestation | Bypasses hardware attestation checks |
+| Zygisk Native Layer | C++ hooks for undetectable process hiding |
 | WebUI Dashboard | Full-featured config panel with persistence |
 | Auto Keybox Updates | Self-updating keybox from trusted sources |
 | 45+ Target Apps | Banking, ride-sharing, streaming, games |
@@ -29,7 +29,7 @@ Hide root from Uber Driver, banking apps, streaming services, and more. For Magi
 
 ## Quick Start
 
-1. Download `UBLESTRAMK-v1.4.0.zip` from [Releases](../../releases)
+1. Download `UBLESTRAMK-v1.4.1.zip` from [Releases](../../releases)
 2. Install via your root manager (Magisk/KernelSU/APatch)
 3. **Reboot** your device
 4. Open the WebUI:
@@ -49,23 +49,14 @@ Hide root from Uber Driver, banking apps, streaming services, and more. For Magi
 **Games**: Pokemon GO, Clash of Clans
 **Enterprise**: Microsoft Teams, Slack, Zoom
 
-## WebUI Dashboard
-
-The WebUI provides:
-- **Protection Settings**: Toggle bootloader spoof, build props, keystore hiding
-- **Keybox Config**: Source type, security level (TEE/StrongBox/Software), attestation mode
-- **Target Apps**: Visual list of all 45+ target apps with categories
-- **Module Logs**: Live log viewer with color-coded severity
-- **Actions**: Force keybox update, run hide now, validate keybox
-
 ## Building from Source
 
 ```bash
 # Validate only
 ./build.sh --check-only
 
-# Build
-./build.sh v1.4.0
+# Build (requires Android NDK for native layer)
+./build.sh v1.4.1
 
 # Output: build/ and output/ directories
 ```

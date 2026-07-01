@@ -1,15 +1,15 @@
 #!/bin/bash
 # ==========================================
-# UBLESTRAMK - Build Script v1.4.0
+# UBLESTRAMK - Build Script v1.4.1
 # Usage: ./build.sh [version] [--check-only]
 # ==========================================
 set -euo pipefail
 
 MODULE_ID="UBLESTRAMK"
 MODULE_NAME="UBLESTRAMK"
-DEFAULT_VERSION="v1.4.0"
+DEFAULT_VERSION="v1.4.1"
 VERSION="${1:-$DEFAULT_VERSION}"
-VERSION_CODE=1400
+VERSION_CODE=1401
 CHECK_ONLY=false
 [ "${1:-}" = "--check-only" ] || [ "${2:-}" = "--check-only" ] && CHECK_ONLY=true
 
@@ -34,7 +34,7 @@ warn() { log_warn "$1"; WARNINGS=$((WARNINGS + 1)); }
 
 echo ""
 echo "============================================"
-echo "  UBLESTRAMK Build System v1.4.0"
+echo "  UBLESTRAMK Build System v1.4.1"
 echo "  Module: $MODULE_NAME"
 echo "  Version: $VERSION"
 echo "============================================"
@@ -51,7 +51,7 @@ validate_required_files() {
     for f in "${REQUIRED_FILES[@]}"; do
         if [ ! -f "$SCRIPT_DIR/$f" ]; then error "Missing: $f"
         else
-            local size=$(wc -c < "$SCRIPT_DIR/$f" 2>/dev/null || echo 0)
+            size=$(wc -c < "$SCRIPT_DIR/$f" 2>/dev/null || echo 0)
             log_info "  OK: $f (${size}B)"
         fi
     done
@@ -72,16 +72,31 @@ validate_webroot() {
     if [ ! -d "$SCRIPT_DIR/webroot" ]; then error "Missing webroot/"; return; fi
     if [ ! -f "$SCRIPT_DIR/webroot/index.html" ]; then error "Missing webroot/index.html"
     else
-        local size=$(wc -c < "$SCRIPT_DIR/webroot/index.html" 2>/dev/null || echo 0)
+        size=$(wc -c < "$SCRIPT_DIR/webroot/index.html" 2>/dev/null || echo 0)
         log_info "  OK: webroot/index.html (${size}B)"
+    fi
+}
+
+validate_zygisk() {
+    log_info "Validating Zygisk source..."
+    if [ ! -f "$SCRIPT_DIR/zygisk_src/jni/root_spoof.cpp" ]; then
+        warn "Missing zygisk_src/jni/root_spoof.cpp (native layer disabled)"
+    else
+        size=$(wc -c < "$SCRIPT_DIR/zygisk_src/jni/root_spoof.cpp" 2>/dev/null || echo 0)
+        log_info "  OK: root_spoof.cpp (${size}B)"
+    fi
+    if [ ! -f "$SCRIPT_DIR/zygisk_src/jni/Android.mk" ]; then
+        warn "Missing Android.mk"
+    else
+        log_info "  OK: Android.mk"
     fi
 }
 
 validate_module_prop() {
     log_info "Validating module.prop..."
-    local id=$(grep "^id=" "$SCRIPT_DIR/module.prop" 2>/dev/null | cut -d'=' -f2 || true)
-    local ver=$(grep "^version=" "$SCRIPT_DIR/module.prop" 2>/dev/null | cut -d'=' -f2 || true)
-    local vcode=$(grep "^versionCode=" "$SCRIPT_DIR/module.prop" 2>/dev/null | cut -d'=' -f2 || true)
+    id=$(grep "^id=" "$SCRIPT_DIR/module.prop" 2>/dev/null | cut -d'=' -f2 || true)
+    ver=$(grep "^version=" "$SCRIPT_DIR/module.prop" 2>/dev/null | cut -d'=' -f2 || true)
+    vcode=$(grep "^versionCode=" "$SCRIPT_DIR/module.prop" 2>/dev/null | cut -d'=' -f2 || true)
     [ -z "$id" ] && error "Missing id"
     [ -z "$ver" ] && error "Missing version"
     [ -z "$vcode" ] && error "Missing versionCode"
@@ -105,6 +120,7 @@ validate_system_prop() {
 validate_required_files
 validate_shell_scripts
 validate_webroot
+validate_zygisk
 validate_module_prop
 validate_keybox
 validate_system_prop
@@ -151,6 +167,9 @@ if [ "$SKIP_NATIVE" -eq 0 ]; then
         log_warn "Native build failed"
     fi
     cd "$SCRIPT_DIR"
+else
+    log_info "Skipping native build (NDK not available)"
+    log_info "Install Android NDK and set ANDROID_NDK_HOME to enable native layer"
 fi
 
 MODULE_BUILD="$BUILD_DIR/$MODULE_ID"
@@ -165,9 +184,7 @@ cp "$SCRIPT_DIR/module.prop" "$SCRIPT_DIR/system.prop" "$SCRIPT_DIR/post-fs-data
 cp -r "$SCRIPT_DIR/META-INF" "$MODULE_BUILD/"
 cp -r "$SCRIPT_DIR/webroot" "$MODULE_BUILD/"
 
-sed -i "s/^version=.*/version=$VERSION/" "$MODULE_BUILD/module.prop"
-sed -i "s/^versionCode=.*/versionCode=$VERSION_CODE/" "$MODULE_BUILD/module.prop"
-
+# Copy Zygisk libs if they were built
 if [ -d "$BUILD_DIR/libs" ]; then
     mkdir -p "$MODULE_BUILD/zygisk"
     for abi in arm64-v8a armeabi-v7a x86 x86_64; do
@@ -175,6 +192,9 @@ if [ -d "$BUILD_DIR/libs" ]; then
             cp "$BUILD_DIR/libs/$abi/libublestramk.so" "$MODULE_BUILD/zygisk/$abi.so"
     done
 fi
+
+sed -i "s/^version=.*/version=$VERSION/" "$MODULE_BUILD/module.prop"
+sed -i "s/^versionCode=.*/versionCode=$VERSION_CODE/" "$MODULE_BUILD/module.prop"
 
 chmod -R 755 "$MODULE_BUILD"
 chmod 644 "$MODULE_BUILD/module.prop" "$MODULE_BUILD/system.prop" "$MODULE_BUILD/common_func.sh" \
