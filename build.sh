@@ -207,17 +207,29 @@ if [ -n "${ANDROID_NDK_HOME:-}" ] || [ -n "${ANDROID_NDK:-}" ]; then
     if [ -x "$NDK/ndk-build" ]; then
         log_info "Using NDK: $NDK"
         log_info "Building Zygisk..."
-        if "$NDK/ndk-build" -C "$ZYGISK_SRC" \
+        ndk_out=$("$NDK/ndk-build" -C "$ZYGISK_SRC" \
             NDK_PROJECT_PATH="$ZYGISK_SRC" \
             APP_BUILD_SCRIPT="$ZYGISK_SRC/jni/Android.mk" \
             NDK_APPLICATION_MK="$ZYGISK_SRC/jni/Application.mk" \
             NDK_OUT="$BUILD_DIR/obj" \
-            NDK_LIBS_OUT="$BUILD_DIR/libs" 2>&1 | while IFS= read -r line; do
-                echo "  $line"
-            done; then
+            NDK_LIBS_OUT="$BUILD_DIR/libs" 2>&1) && ndk_status=0 || ndk_status=$?
+        if [ $ndk_status -eq 0 ]; then
             log_success "Native build OK"
+            # List built libs
+            for abi in arm64-v8a armeabi-v7a x86 x86_64; do
+                if [ -f "$BUILD_DIR/libs/$abi/libublestramk.so" ]; then
+                    local lib_size
+                    lib_size=$(file_size "$BUILD_DIR/libs/$abi/libublestramk.so")
+                    log_info "  Built: libublestramk.so ($abi) — ${lib_size}B"
+                fi
+            done
         else
-            log_warn "Native build failed — continuing without native layer"
+            echo "$ndk_out" | while IFS= read -r line; do echo "  $line"; done
+            if echo "$ndk_out" | grep -q "libublestramk.so"; then
+                log_warn "Native build had warnings — libs may still be present"
+            else
+                log_warn "Native build failed — continuing without native layer"
+            fi
         fi
     else
         log_info "ndk-build not found at $NDK/ndk-build — skipping native build"
