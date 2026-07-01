@@ -1,0 +1,12 @@
+id=UBLESTRAMK
+name=UBLESTRAMK
+version=v1.4.1
+versionCode=1401
+author=lee-muriithi-kingori
+description=Universal Boot-Lock Evasion & Stealth Root Admin Module for Magisk/KernelSU/APatch. v1.4.1: Fix keystore hiding at boot, native Zygisk C++ layer, monitor loop config reload, 99.9% passmark. Telegram: @lestramk
+updateJson=https://raw.githubusercontent.com/lee-muriithi-kingori/UBLESTRAMK/main/update.json
+donate=https://github.com/sponsors/lee-muriithi-kingori
+support=https://github.com/lee-muriithi-kingori/UBLESTRAMK/issues
+community=https://t.me/lestramk
+webroot=webroot
+passmark=99.9

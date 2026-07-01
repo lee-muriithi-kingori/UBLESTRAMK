@@ -1,0 +1,38 @@
+# ==========================================
+# UBLESTRAMK - Git Ignore
+#
+# CHANGES (v1.4.1 - audit-fixes):
+# - Added zygisk_src build artifacts
+# ==========================================
+
+# Build outputs
+/build/
+/output/
+/obj/
+/libs/
+
+# Android NDK build artifacts
+*.o
+*.so
+*.a
+*.d
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Flashable ZIPs at repo root (built artifacts)
+/*.zip
+*.sha256
+
+# Local test files
+local.properties
+skipdelprop

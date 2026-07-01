@@ -1,0 +1,46 @@
+# UBLESTRAMK System Properties v1.4.1
+# Build properties
+ro.build.tags=release-keys
+ro.build.type=user
+ro.secure=1
+ro.adb.secure=1
+ro.debuggable=0
+ro.force.debuggable=0
+
+# Bootloader locked state
+ro.boot.flash.locked=1
+ro.boot.verifiedbootstate=green
+ro.boot.veritymode=enforcing
+ro.boot.vbmeta.device_state=locked
+
+# Samsung Knox
+ro.boot.warranty_bit=0
+ro.warranty_bit=0
+
+# Secure boot
+ro.secureboot.lockstate=locked
+ro.secureboot.devicelock=1
+
+# OEM unlock disabled
+sys.oem_unlock_allowed=0
+
+# Recovery mode prevention (CRITICAL)
+ro.boot.mode=boot
+ro.bootmode=boot
+vendor.boot.mode=boot
+
+# Keystore backend
+ro.hardware.keystore=teetz
+ro.security.keystore.deserializer_type=tee
+
+# Crypto state
+ro.crypto.state=encrypted
+ro.crypto.type=file
+
+# KeyMint/Gatekeeper
+ro.hardware.keymint=trusty
+ro.hardware.gatekeeper=teetz
+ro.hardware.bootctrl=default
+
+# Developer indicators
+persist.sys.adb.notify=0

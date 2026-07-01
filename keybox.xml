@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  UBLESTRAMK - Keybox Configuration File
+
+  This file contains device-specific attestation key configuration.
+  It mimics the format of a real Android keybox.xml file used for
+  hardware-backed attestation (KeyMint/StrongBox/TEE).
+
+  INSTRUCTIONS:
+  1. This is a TEMPLATE - replace the placeholder values with real keys
+  2. To obtain real attestation keys, extract from a stock device using
+     a keybox extraction tool from XDA Developers or TrickyStore
+  3. For production use, purchase valid keybox from a trusted provider
+
+  SECURITY LEVELS:
+  - 0: Software-only (no hardware backing)
+  - 1: TEE (Trusted Execution Environment) - most common
+  - 2: StrongBox (dedicated secure hardware) - most secure
+-->
+
+<Keybox>
+  <Version>1.0.0</Version>
+  <Device>
+    <Brand>google</Brand>
+    <Manufacturer>Google</Manufacturer>
+    <Product>panther</Product>
+    <Model>Pixel 7</Model>
+    <Board>panther</Board>
+    <SecurityLevel>1</SecurityLevel>
+    <KeyAlgorithm>EC_P256</KeyAlgorithm>
+    <DeviceID type="serial">PLACEHOLDER_SERIAL</DeviceID>
+    <DeviceID type="imei">PLACEHOLDER_IMEI</DeviceID>
+    <DeviceID type="meid">PLACEHOLDER_MEID</DeviceID>
+  </Device>
+
+  <Keys>
+    <Key algorithm="ec_p256" purpose="attestation">
+      <PrivateKey format="pkcs8">
+        <!-- PLACEHOLDER: Replace with real EC P-256 private key -->
+        MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC5...</PrivateKey>
+      <CertificateChain>
+        <Certificate index="0">
+          <!-- PLACEHOLDER: Replace with real device attestation cert -->
+          MIIDXTCCAkWgAwIBAgIQC2Z5l...</Certificate>
+        <Certificate index="1">
+          <!-- PLACEHOLDER: Replace with real intermediate CA cert -->
+          MIIDfTCCAuagAwIBAgIDE2WwMA...</Certificate>
+        <Certificate index="2">
+          MIIDfTCCAuagAwIBAgIDE2WwMA0GCSqGSIb3DQEBCwUAMIG...</Certificate>
+      </CertificateChain>
+    </Key>
+
+    <Key algorithm="rsa_2048" purpose="attestation">
+      <PrivateKey format="pkcs8">
+        <!-- PLACEHOLDER: Replace with real RSA 2048 private key -->
+        MIIEpAIBAAKCAQEAy8Dbv8prQ7l...</PrivateKey>
+      <CertificateChain>
+        <Certificate index="0">
+          <!-- PLACEHOLDER: Replace with real RSA device attestation cert -->
+          MIIDXTCCAkWgAwIBAgIQC2Z5l2eO...</Certificate>
+        <Certificate index="1">
+          <!-- PLACEHOLDER: Replace with real intermediate CA cert -->
+          MIIDfTCCAuagAwIBAgIDE2WwMA0G...</Certificate>
+        <Certificate index="2">
+          MIIDfTCCAuagAwIBAgIDE2WwMA0GCSqGSIb3DQEBCwUAMIG...</Certificate>
+      </CertificateChain>
+    </Key>
+  </Keys>
+
+  <Properties>
+    <Property name="ro.boot.verifiedbootstate">green</Property>
+    <Property name="ro.boot.vbmeta.device_state">locked</Property>
+    <Property name="ro.boot.flash.locked">1</Property>
+    <Property name="ro.boot.veritymode">enforcing</Property>
+    <Property name="ro.boot.warranty_bit">0</Property>
+    <Property name="ro.secureboot.lockstate">locked</Property>
+    <Property name="ro.boot.secureboot">1</Property>
+  </Properties>
+
+  <Configuration>
+    <SpoofedSecurityLevel>tee</SpoofedSecurityLevel>
+    <AttestationMode>spoof</AttestationMode>
+    <TargetApps>
+      <!-- Built-in targets are in target_apps.txt -->
+    </TargetApps>
+  </Configuration>
+</Keybox>
