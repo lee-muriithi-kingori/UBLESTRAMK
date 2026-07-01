@@ -1,7 +1,7 @@
 # ==========================================
 # UBLESTRAMK - Application Makefile
 # ==========================================
-APP_PLATFORM := android-26
+APP_PLATFORM := android-24
 APP_ABI := arm64-v8a armeabi-v7a x86 x86_64
 APP_CFLAGS := -Wall -Wextra -Wno-unused-parameter
 APP_CPPFLAGS := -std=c++17 -fno-rtti -fno-exceptions
