@@ -1,8 +1,8 @@
 # ==========================================
 # UBLESTRAMK - Git Ignore
 #
-# CHANGES (audit-fixes):
-# - Added this file (was missing entirely)
+# CHANGES (v1.4.1 - audit-fixes):
+# - Added zygisk_src build artifacts
 # ==========================================
 
 # Build outputs

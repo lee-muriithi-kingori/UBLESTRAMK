@@ -1,10 +1,10 @@
 #!/system/bin/sh
-# UBLESTRAMK Customize Script v1.4.0
+# UBLESTRAMK Customize Script v1.4.1
 
 [ "$(id -u)" != "0" ] && { ui_print "! Must be root"; abort "Not root"; }
 
 ui_print "============================================"
-ui_print "  UBLESTRAMK <v1.4.0>"
+ui_print "  UBLESTRAMK <v1.4.1>"
 ui_print "  Universal Boot-Lock Evasion"
 ui_print "        & Stealth Root Admin Module"
 ui_print "============================================"
@@ -33,7 +33,7 @@ else
 fi
 
 ui_print ""
-ui_print "- Installing UBLESTRAMK <v1.4.0>..."
+ui_print "- Installing UBLESTRAMK <v1.4.1>..."
 
 set_perm_recursive "$MODPATH" 0 0 0755 0644
 set_perm "$MODPATH/post-fs-data.sh" 0 0 0755
@@ -48,6 +48,7 @@ set_perm "$MODPATH/hide_root.sh" 0 0 0755
 [ -f "$MODPATH/keybox_updater.sh" ] && { set_perm "$MODPATH/keybox_updater.sh" 0 0 0755; ui_print "- Keybox updater installed"; }
 [ -f "$MODPATH/update_service_addon.sh" ] && { set_perm "$MODPATH/update_service_addon.sh" 0 0 0644; ui_print "- Service addon installed"; }
 [ -d "$MODPATH/webroot" ] && { set_perm_recursive "$MODPATH/webroot" 0 0 0755 0644; ui_print "- WebUI dashboard installed"; }
+[ -d "$MODPATH/zygisk" ] && { set_perm_recursive "$MODPATH/zygisk" 0 0 0755 0644; ui_print "- Zygisk native module installed"; }
 
 ui_print "- Initializing configuration..."
 
@@ -84,7 +85,7 @@ chmod 644 "$MODPATH/.install_complete"
 
 ui_print ""
 ui_print "============================================"
-ui_print "  UBLESTRAMK <v1.4.0> FEATURES:"
+ui_print "  UBLESTRAMK <v1.4.1> FEATURES:"
 ui_print "============================================"
 ui_print ""
 ui_print "  [WEBUI] Full Settings Persistence"
@@ -95,7 +96,8 @@ ui_print "          - Magisk: Tap action button"
 ui_print ""
 ui_print "  [99.9%] Passmark Score"
 ui_print "  [KEYBOX] Self-Updating Keybox"
-ui_print "  [HIDE] Stealth Root Admin"
+ui_print "  [ZYGISK] Native C++ Root Hiding"
+ui_print "  [HIDE]   Stealth Root Admin"
 ui_print ""
 ui_print "============================================"
 ui_print "  SETUP:"

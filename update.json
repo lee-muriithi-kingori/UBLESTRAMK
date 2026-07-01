@@ -1,8 +1,8 @@
 {
-    "version": "v1.4.0",
-    "versionCode": 1400,
-    "zipUrl": "https://github.com/lee-muriithi-kingori/UBLESTRAMK/releases/download/v1.4.0/UBLESTRAMK-v1.4.0.zip",
-    "changelog": "https://github.com/lee-muriithi-kingori/UBLESTRAMK/releases/tag/v1.4.0",
+    "version": "v1.4.1",
+    "versionCode": 1401,
+    "zipUrl": "https://github.com/lee-muriithi-kingori/UBLESTRAMK/releases/download/v1.4.1/UBLESTRAMK-v1.4.1.zip",
+    "changelog": "https://github.com/lee-muriithi-kingori/UBLESTRAMK/releases/tag/v1.4.1",
     "passmark": 99.9,
     "tag": "beta"
 }

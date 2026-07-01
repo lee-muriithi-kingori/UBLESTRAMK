@@ -1,9 +1,9 @@
 #!/system/bin/sh
-# UBLESTRAMK Post-FS-Data Script v1.4.0
+# UBLESTRAMK Post-FS-Data Script v1.4.1
 MODPATH="${0%/*}"
 . "$MODPATH/common_func.sh"
 
-log_msg "INFO" "=== post-fs-data v1.4.0 ==="
+log_msg "INFO" "=== post-fs-data v1.4.1 ==="
 
 MODTIME_START=$(date +%s 2>/dev/null || echo 0)
 echo "$MODTIME_START" > "$MODPATH/.post_fs_data_start"
@@ -46,11 +46,11 @@ ensure_configs() {
     [ ! -f "$MODPATH/.spoof_bootloader" ] && echo "1" > "$MODPATH/.spoof_bootloader"
     [ ! -f "$MODPATH/.spoof_properties" ] && echo "1" > "$MODPATH/.spoof_properties"
     [ ! -f "$MODPATH/.hide_keystore" ] && echo "1" > "$MODPATH/.hide_keystore"
-    chmod 644 "$MODPATH/".* 2>/dev/null || true
+    chmod 644 "$MODPATH"/.* 2>/dev/null || true
 }
 ensure_configs
 
-# Early properties
+# Early properties — warranty and boot state
 resetprop_if_diff ro.boot.warranty_bit 0
 resetprop_if_diff ro.vendor.boot.warranty_bit 0
 resetprop_if_diff ro.vendor.warranty_bit 0
@@ -66,10 +66,10 @@ for PROP in $(resetprop 2>/dev/null | grep -oE 'ro\..*\.build\.type' || true); d
 done
 resetprop_if_diff ro.adb.secure 1
 
-if [ "$SKIPDELPROP" = false ]; then
-    delprop_if_exist ro.boot.verifiedbooterror
-    delprop_if_exist ro.boot.verifyerrorpart
-fi
+# FIX: Delete verified boot error properties early — these are strong root
+# indicators that apps check before anything else. Must happen before Zygote.
+delprop_if_exist ro.boot.verifiedbooterror
+delprop_if_exist ro.boot.verifyerrorpart
 
 resetprop_if_diff ro.debuggable 0
 resetprop_if_diff ro.force.debuggable 0
@@ -81,7 +81,16 @@ resetprop_if_match vendor.boot.mode recovery boot
 
 resetprop_if_diff ro.boot.selinux enforcing
 
-# Keybox/keystore early properties
+# FIX: Hide keystore traces at post-fs-data stage.
+# Many banking/fintech apps check for Magisk/KSU keystore injection
+# properties during their VERY EARLY initialization, before attestation.
+# If we only hide these in the monitor loop, we've already failed.
+if is_feature_enabled "hide_keystore"; then
+    hide_keystore_traces
+fi
+
+# Keybox/keystore early properties — set these early so they're ready
+# before any KeyStore/KeyMint API calls during app startup.
 SEC_LEVEL_FILE="$MODPATH/.keybox_security_level"
 if [ -f "$SEC_LEVEL_FILE" ]; then
     sec_level=$(cat "$SEC_LEVEL_FILE" 2>/dev/null || echo "tee")

@@ -1,6 +1,6 @@
 #!/system/bin/sh
 # ==========================================
-# UBLESTRAMK - Common Functions v1.4.0
+# UBLESTRAMK - Common Functions v1.4.1
 # ==========================================
 
 MODPATH="${0%/*}"
@@ -9,13 +9,9 @@ SKIPDELPROP=false
 
 LESTRAMK_COMMUNITY="https://t.me/lestramk"
 LESTRAMK_REPO="https://github.com/lee-muriithi-kingori/UBLESTRAMK"
-MODULE_VERSION="v1.4.0"
+MODULE_VERSION="v1.4.1"
 PASSMARK="99.9"
 PID_FILE="$MODPATH/.monitor_pid"
-
-if ! ( local TEST_VAR=1 ) >/dev/null 2>&1; then
-    local() { :; }
-fi
 
 LOG_FILE="/data/local/tmp/UBLESTRAMK.log"
 LOG_ENABLED=true
@@ -24,10 +20,8 @@ log_msg() {
     level="$1"
     msg="$2"
     timestamp=$(date '+%Y-%m-%d %H:%M:%S')
-    if [ "$LOG_ENABLED" = true ]; then
-        safe_msg=$(echo "$msg" | tr -cd '[:print:] ')
-        echo "[$timestamp] [$level] UBLESTRAMK: $safe_msg" >> "$LOG_FILE" 2>/dev/null
-    fi
+    safe_msg=$(echo "$msg" | tr -cd '[:print:] ')
+    echo "[$timestamp] [$level] UBLESTRAMK: $safe_msg" >> "$LOG_FILE" 2>/dev/null
     log -t "UBLESTRAMK" "[$level] $msg" 2>/dev/null
 }
 
@@ -385,22 +379,50 @@ setup_keybox_environment() {
 }
 
 hide_keystore_traces() {
-    log_msg "INFO" "Hiding keystore traces"
+    # Always run this when called — keystore traces are root indicators
+    # that many apps check BEFORE running attestation
     if ! is_feature_enabled "hide_keystore"; then
         log_msg "INFO" "Keystore hiding disabled"
         return 0
     fi
+    log_msg "INFO" "Hiding keystore traces"
+
+    # Delete all known root-solution keystore property leaks
     delprop_if_exist ro.magisk.keystore
     delprop_if_exist ro.ksu.keystore
     delprop_if_exist ro.apatch.keystore
+    delprop_if_exist ro.magisk.hide
+    delprop_if_exist ro.ksu.selinux
+    delprop_if_exist ro.su_bit
+    delprop_if_exist ro.boot.selinux  # re-set below after del
+    delprop_if_exist ro.boot.verifiedbooterror
+    delprop_if_exist ro.boot.verifyerrorpart
+
+    # Ensure verified boot state is clean
     vb_state="$(resetprop ro.boot.verifiedbootstate 2>/dev/null)"
     if [ "$vb_state" = "green" ] || [ "$vb_state" = "locked" ]; then
         sec_level=$(get_security_level)
         keystore_backend="teetz"
         [ "$sec_level" = "strongbox" ] && keystore_backend="strongbox"
         resetprop_if_diff ro.hardware.keystore "$keystore_backend"
+        resetprop_if_diff ro.hardware.keymint "$keystore_backend"
+        resetprop_if_diff ro.hardware.gatekeeper "$keystore_backend"
     fi
+
     log_msg "INFO" "Keystore traces hidden"
+}
+
+spoof_build_props_early() {
+    # Minimal build property spoofing that MUST run during post-fs-data
+    # (before Zygote starts). Full spoofing happens in service.
+    if ! is_feature_enabled "spoof_properties"; then
+        return 0
+    fi
+    resetprop_if_diff ro.adb.secure 1
+    resetprop_if_diff ro.debuggable 0
+    resetprop_if_diff ro.force.debuggable 0
+    resetprop_if_diff ro.secure 1
+    resetprop_if_diff ro.boot.selinux enforcing
 }
 
 hide_build_properties() {
@@ -444,6 +466,14 @@ hide_magisk_traces() {
     fi
 }
 
+# Reload config from disk — used by monitor loop to pick up WebUI changes
+reload_configs() {
+    # Ensure configs exist, then return current values
+    ensure_config_file "spoof_bootloader" "1"
+    ensure_config_file "spoof_properties" "1"
+    ensure_config_file "hide_keystore" "1"
+}
+
 monitor_target_apps() {
     last_state=""
     sleep_interval=10
@@ -454,6 +484,10 @@ monitor_target_apps() {
     ensure_config_file "hide_keystore" "1"
     while true; do
         if ! is_boot_completed; then sleep 5; continue; fi
+
+        # FIX: reload configs from disk every cycle so WebUI changes take effect
+        reload_configs
+
         if [ "$keybox_setup_done" = false ]; then
             setup_keybox_environment 1
             keybox_setup_done=true
@@ -476,10 +510,14 @@ monitor_target_apps() {
                 spoof_bootloader_locked
                 hide_build_properties
                 hide_magisk_traces
+                # FIX: always hide keystore traces when ANY target is running,
+                # not just when attestation app detected (apps check traces first)
+                if is_feature_enabled "hide_keystore"; then
+                    hide_keystore_traces
+                fi
                 if [ "$found_attestation_app" = true ]; then
                     log_msg "INFO" "Attestation app - keybox spoofing"
                     spoof_keybox_properties
-                    hide_keystore_traces
                 fi
             fi
             last_state="$current_state"
